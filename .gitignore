@@ -24,3 +24,4 @@
 venv
 *.xml
 *.iml
+crisp/library/secrets.py
