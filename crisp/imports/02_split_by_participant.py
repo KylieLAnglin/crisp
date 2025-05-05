@@ -19,6 +19,8 @@ df1 = df1[
     ]
 ]
 df1 = df1.rename(columns={"meaning_making": "human_code"})
+df1 = df1[df1.human_code.notna()]
+
 # %%
 df2 = pd.read_excel(start.DATA_DIR + "temp/negative_core_beliefs.xlsx")
 df2["construct"] = "negative_core_beliefs"
@@ -33,7 +35,7 @@ df2 = df2[
     ]
 ]
 df2 = df2.rename(columns={"negative_belief_any": "human_code"})
-
+df2 = df2[df2.human_code.notna()]
 
 # %%
 df = pd.concat([df1, df2])
