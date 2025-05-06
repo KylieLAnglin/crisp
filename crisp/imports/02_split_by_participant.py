@@ -62,19 +62,24 @@ participant_df = df[["participant_id", "study"]].drop_duplicates(
 # drop if missing participant_id or study
 participant_df = participant_df.dropna(subset=["participant_id", "study"])
 
-# assign random number from 1 to 1000 for each participant, random seed  = 1001
-np.random.seed(1001)
-participant_df["random_number"] = np.random.randint(1, 1001, participant_df.shape[0])
+# assign random number from 1 to 1000 for each participant
+np.random.seed(1)  # 1001
+participant_df["random_number"] = np.random.randint(1, 100001, participant_df.shape[0])
+participant_df = participant_df.sort_values(by=["random_number"])
 
 # %%
-# 25% train
-# 50 % dev
-# 25 % test
-participant_df["train"] = participant_df["random_number"] <= 250
-participant_df["dev"] = (participant_df["random_number"] > 250) & (
-    participant_df["random_number"] <= 750
+# first 25% of participants are train
+participant_df["order"] = np.arange(1, participant_df.shape[0] + 1)
+
+n = participant_df.order.max()
+train_size = int(n * 0.25)
+dev_size = int(n * 0.5)
+test_size = int(n * 0.25)
+participant_df["train"] = participant_df.order <= train_size
+participant_df["dev"] = (participant_df.order > train_size) & (
+    participant_df.order <= train_size + dev_size
 )
-participant_df["test"] = participant_df["random_number"] > 750
+participant_df["test"] = participant_df.order > train_size + dev_size
 
 participant_df["split_group"] = np.where(participant_df.train, "train", "")
 participant_df["split_group"] = np.where(
@@ -108,5 +113,15 @@ plt.xlabel("Split Group")
 plt.xticks(rotation=0)
 plt.show()
 # sort train dev test
+
+# %%
+# print proportion of positive and negative examples in each split
+temp_df = final_df[final_df.construct == "negative_core_beliefs"]
+temp_df = temp_df.groupby(["split_group", "human_code"]).size().unstack()
+temp_df = temp_df.fillna(0)
+temp_df = temp_df.div(temp_df.sum(axis=1), axis=0)
+temp_df = temp_df.reset_index()
+temp_df = temp_df.rename(columns={0: "negative", 1: "positive"})
+temp_df  # %%
 
 # %%
