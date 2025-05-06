@@ -23,7 +23,6 @@ from crisp.library import metric_standard_errors
 
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 
-MODEL = "gpt-4.1"
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 PART1_ID = 0
@@ -102,7 +101,7 @@ prompt = formatted_prompts[1]
 text = df.text.iloc[0]
 messages = prompt + [{"role": "user", "content": text}]
 response = client.chat.completions.create(
-    model=MODEL, messages=messages, temperature=0, n=1
+    model=start.MODEL, messages=messages, temperature=0, n=1
 )
 for choice in response.choices:
     print(choice.message.content)
@@ -116,7 +115,7 @@ for prompt, opt_id in zip(formatted_prompts, opt_ids):
         messages = prompt + [{"role": "user", "content": text}]
 
         response = client.chat.completions.create(
-            model=MODEL,
+            model=start.MODEL,
             messages=messages,
             temperature=0,
         )
@@ -137,7 +136,7 @@ for prompt, opt_id in zip(formatted_prompts, opt_ids):
             "response": responses,
             "classification": classifications,
             "prompt": prompt[0]["content"],
-            "model": MODEL,
+            "model": start.MODEL,
             "opt_id": opt_id,
         }
     )

@@ -1,26 +1,22 @@
 ###
-# Test each optional addition (inclusion/exclusion critieria)
-
+# Tests three definitions and three tasks.
+# Print prompts and performance to destination_path below
 ###
+# %%
 from crisp.library import start
 
-# import prompts from here
 PROMPT_FILE = "ncb_variants"
+# import prompts from here
 source_path = start.DATA_DIR + "prompts/" + PROMPT_FILE + ".xlsx"
-
 # export results here, prompts are copied to this file
-destination_path = start.MAIN_DIR + "results/" + PROMPT_FILE + "_additions_results.xlsx"
+destination_path = start.MAIN_DIR + "results/" + PROMPT_FILE + "_results_dev.xlsx"
 
-
+# previous results
+previous_results_path = start.MAIN_DIR + "results/" + PROMPT_FILE + "_results.xlsx"
 # %%
-import shutil
-import os
-
-import numpy as np
 import pandas as pd
 from openai import OpenAI
 from openpyxl import load_workbook
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from tqdm import tqdm
 
 
@@ -35,58 +31,30 @@ OPENAI_API_KEY = secrets.OPENAI_API_KEY
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-PART1_ID = 0
-PART2_ID = 0
-# %%
 # text data
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
-df = df[df.split_group == "train"]
+df = df[df.split_group == "dev"]
+
+
 # prompts and prep results file
-PROMPT_FILE = "ncb_variants"
-source_path = start.DATA_DIR + "prompts/" + PROMPT_FILE + ".xlsx"
-destination_path = start.MAIN_DIR + "results/" + PROMPT_FILE + "_additions_results.xlsx"
 export_results.copy_file_and_paste(
     source_path, destination_path
 )  # copy prompts to results folder
 
 # %% Import prompts
-part1_variants = pd.read_excel(source_path, sheet_name="part1")
-part1_variants = part1_variants.set_index("part_num")
-part2_variants = pd.read_excel(source_path, sheet_name="part2")
-part2_variants = part2_variants.set_index("part_num")
-
-# basic propmpt text
+prompt_df = pd.read_excel(previous_results_path, sheet_name="combo_results")
 
 # %%
-optionals = pd.read_excel(source_path, sheet_name="opt")
-optionals = optionals.set_index("part_num")
+max_f1_index = prompt_df["F1"].idxmax()
+min_f1_index = prompt_df["F1"].idxmin()
 
-
-# %%
-# Add one
-full_prompt_texts = []
-opt_ids = []
-for opt, opt_id in zip(optionals["prompt_part"], optionals.index):
-
-    prompt_text = (
-        part1_variants.loc[PART1_ID]["prompt_part"]
-        + " "
-        + opt
-        + " "
-        + part2_variants.loc[PART2_ID]["prompt_part"]
-        + " "
-    )
-    full_prompt_texts.append(prompt_text)
-    opt_ids.append(opt_id)
-
-
+prompt_df = prompt_df[prompt_df.Combo.isin([max_f1_index, min_f1_index])]
 # %%
 # Create combos
+prompt_df["text"] = prompt_df["Prompt"]
+prompt_df["combo_id"] = prompt_df["Combo"]
 
-
-prompt_df = pd.DataFrame(full_prompt_texts, columns=["text"])
-prompt_df["opt_id"] = opt_ids
-
+full_prompt_texts = prompt_df["text"].tolist()
 # %%
 
 formatted_prompts = []
@@ -108,7 +76,6 @@ for choice in response.choices:
 # %%
 # %% Get responses
 response_dfs = []
-opt_id = 0
 for prompt in formatted_prompts:
     responses = []
     classifications = []
@@ -138,32 +105,36 @@ for prompt in formatted_prompts:
             "classification": classifications,
             "prompt": prompt[0]["content"],
             "model": start.MODEL,
-            "opt_id": opt_id,
+            "combo_id": prompt_df[prompt_df.text == prompt[0]["content"]].combo_id.iloc[
+                0
+            ],
         }
     )
     response_dfs.append(response_df)
-    opt_id += 1
 
 long_df = pd.concat(response_dfs)
 long_df = long_df.dropna(subset=["classification"])
-long_df.to_excel(
-    start.DATA_DIR + "temp/ncb_variants_plus_opt_responses.xlsx", index=False
-)
+long_df.to_excel(start.DATA_DIR + "temp/ncb_variants_responses_dev.xlsx", index=False)
 # %%
 # Load empty results file (just has prompts sheets)
 wb = load_workbook(destination_path)
 wb.create_sheet("combo_results")
 ws = wb["combo_results"]
 
-ws.cell(row=1, column=1, value="Opt ID")
+ws.cell(row=1, column=1, value="Combo")
 ws.cell(row=1, column=2, value="Accuracy")
 ws.cell(row=1, column=3, value="Precision")
 ws.cell(row=1, column=4, value="Recall")
 ws.cell(row=1, column=5, value="F1")
+ws.cell(row=1, column=6, value="Accuracy SE")
+ws.cell(row=1, column=7, value="Precision SE")
+ws.cell(row=1, column=8, value="Recall SE")
+ws.cell(row=1, column=9, value="F1 SE")
+ws.cell(row=1, column=10, value="Prompt")
 
 row = 2
-for combo in long_df.opt_id.unique():
-    combo_df = long_df[long_df.opt_id == combo]
+for combo in long_df.combo_id.unique():
+    combo_df = long_df[long_df.combo_id == combo]
     valid_indices = combo_df.dropna(subset=["human_code", "classification"]).index
     human_codes = combo_df.loc[valid_indices, "human_code"]
     classifications = combo_df.loc[valid_indices, "classification"]
@@ -171,14 +142,30 @@ for combo in long_df.opt_id.unique():
     accuracy, precision, recall, f1 = classify.print_and_save_metrics(
         human_codes, classifications
     )
+    _, accuracy_se = metric_standard_errors.bootstrap_accuracy(
+        human_codes, classifications, n_bootstraps=1000, random_state=12
+    )
+    _, precision_se = metric_standard_errors.bootstrap_precision(
+        human_codes, classifications, n_bootstraps=1000, random_state=12
+    )
+    _, recall_se = metric_standard_errors.bootstrap_recall(
+        human_codes, classifications, n_bootstraps=1000, random_state=12
+    )
+    _, f1_se = metric_standard_errors.bootstrap_f1(
+        human_codes, classifications, n_bootstraps=1000, random_state=12
+    )
     ws.cell(row=row, column=1, value=combo)
     ws.cell(row=row, column=2, value=round(accuracy, 2))
     ws.cell(row=row, column=3, value=round(precision, 2))
     ws.cell(row=row, column=4, value=round(recall, 2))
     ws.cell(row=row, column=5, value=round(f1, 2))
+    ws.cell(row=row, column=6, value=round(accuracy_se, 2))
+    ws.cell(row=row, column=7, value=round(precision_se, 2))
+    ws.cell(row=row, column=8, value=round(recall_se, 2))
+    ws.cell(row=row, column=9, value=round(f1_se, 2))
+    ws.cell(row=row, column=10, value=combo_df.prompt.iloc[0])
     row = row + 1
 
     wb.save(destination_path)
 
 # %%
-KEEPER = 2
