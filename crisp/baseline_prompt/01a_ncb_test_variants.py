@@ -2,6 +2,7 @@
 # Tests three definitions and three tasks.
 # Print prompts and performance to destination_path below
 ###
+# %%
 from crisp.library import start
 
 PROMPT_FILE = "ncb_variants"
@@ -11,14 +12,10 @@ source_path = start.DATA_DIR + "prompts/" + PROMPT_FILE + ".xlsx"
 destination_path = start.MAIN_DIR + "results/" + PROMPT_FILE + "_results.xlsx"
 
 # %%
-import shutil
-import os
 
-import numpy as np
 import pandas as pd
 from openai import OpenAI
 from openpyxl import load_workbook
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from tqdm import tqdm
 
 
@@ -27,17 +24,14 @@ from crisp.library import secrets
 from crisp.library import export_results
 from crisp.library import format_prompts
 from crisp.library import classify
-from crisp.library import metric_standard_errors
 
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 
-MODEL = "gpt-4.1"
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # text data
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
 df = df[df.split_group == "train"]
-
 # prompts and prep results file
 export_results.copy_file_and_paste(
     source_path, destination_path
@@ -80,32 +74,54 @@ prompt = formatted_prompts[1]
 text = df.text.iloc[0]
 messages = prompt + [{"role": "user", "content": text}]
 response = client.chat.completions.create(
-    model=MODEL, messages=messages, temperature=0, n=1
+    model=start.MODEL, messages=messages, temperature=0, n=1, seed=start.SEED
 )
+# print fingerprint
+print(response.system_fingerprint)
 for choice in response.choices:
     print(choice.message.content)
 # %%
 # %% Get responses
 response_dfs = []
-combo_id = 0
 for prompt in formatted_prompts:
-    responses = []
-    classifications = []
+    responses1 = []
+    responses2 = []
+    responses3 = []
+    classifications1 = []
+    classifications2 = []
+    classifications3 = []
+    fingerprints = []
+
     for text in tqdm(df.text):
         messages = prompt + [{"role": "user", "content": text}]
 
         response = client.chat.completions.create(
-            model=MODEL,
+            model=start.MODEL,
             messages=messages,
             temperature=0,
+            n=3,
+            seed=start.SEED,
         )
-        cleaned_response = response.choices[0].message.content
 
-        responses.append(cleaned_response)
-        classification = classify.create_binary_classification_from_response(
-            cleaned_response
+        cleaned_response1 = response.choices[0].message.content
+        cleaned_response2 = response.choices[1].message.content
+        cleaned_response3 = response.choices[2].message.content
+        classification1 = classify.create_binary_classification_from_response(
+            cleaned_response1
         )
-        classifications.append(classification)
+        classification2 = classify.create_binary_classification_from_response(
+            cleaned_response2
+        )
+        classification3 = classify.create_binary_classification_from_response(
+            cleaned_response3
+        )
+        responses1.append(cleaned_response1)
+        responses2.append(cleaned_response2)
+        responses3.append(cleaned_response3)
+        classifications1.append(classification1)
+        classifications2.append(classification2)
+        classifications3.append(classification3)
+        fingerprints.append(response.system_fingerprint)
     response_df = pd.DataFrame(
         {
             "participant_id": df.participant_id,
@@ -113,18 +129,24 @@ for prompt in formatted_prompts:
             "question": df.question,
             "text": df.text,
             "human_code": df.human_code,
-            "response": responses,
-            "classification": classifications,
+            "response1": responses1,
+            "classification1": classifications1,
             "prompt": prompt[0]["content"],
-            "model": MODEL,
-            "combo_id": combo_id,
+            "model": start.MODEL,
+            "fingerprint": fingerprints,
+            "combo_id": prompt_df[prompt_df.text == prompt[0]["content"]].combo_id.iloc[
+                0
+            ],
+            "response2": responses2,
+            "classification2": classifications2,
+            "response3": responses3,
+            "classification3": classifications3,
         }
     )
     response_dfs.append(response_df)
-    combo_id += 1
 
 long_df = pd.concat(response_dfs)
-long_df = long_df.dropna(subset=["classification"])
+# long_df = long_df.dropna(subset=["classification"])
 long_df.to_excel(start.DATA_DIR + "temp/ncb_variants_responses.xlsx", index=False)
 # %%
 # Load empty results file (just has prompts sheets)
@@ -139,6 +161,7 @@ ws.cell(row=1, column=4, value="Accuracy")
 ws.cell(row=1, column=5, value="Precision")
 ws.cell(row=1, column=6, value="Recall")
 ws.cell(row=1, column=7, value="F1")
+ws.cell(row=1, column=8, value="Prompt")
 
 row = 2
 for combo in long_df.combo_id.unique():
@@ -159,6 +182,9 @@ for combo in long_df.combo_id.unique():
     ws.cell(row=row, column=5, value=round(precision, 2))
     ws.cell(row=row, column=6, value=round(recall, 2))
     ws.cell(row=row, column=7, value=round(f1, 2))
+    ws.cell(row=row, column=8, value=combo_df.prompt.iloc[0])
     row = row + 1
 
     wb.save(destination_path)
+
+# %%
