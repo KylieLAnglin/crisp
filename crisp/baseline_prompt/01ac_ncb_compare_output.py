@@ -21,21 +21,39 @@ unique_vars = [
     "classification",
     "fingerprint",
 ]
-long_df1 = pd.read_excel(start.DATA_DIR + "temp/" + FILE1 + ".xlsx").drop(
-    columns=DROP_VARS
-)
+long_df1 = pd.read_excel(start.DATA_DIR + "temp/" + FILE1 + ".xlsx")
+long_df1["classification"] = long_df1[
+    [
+        "classification1",
+        "classification2",
+        "classification3",
+    ]
+].mode(axis=1)[0]
+long_df1["classification"] = long_df1.classification1
+
+long_df1 = long_df1.drop(columns=DROP_VARS)
 long_df1 = long_df1.rename(
     columns={
-        "response": "response_a",
+        "response1": "response_a",
         "classification": "classification_a",
         "fingerprint": "fingerprint_a",
     }
 )
+
+# %%
 long_df2 = pd.read_excel(start.DATA_DIR + "temp/" + FILE2 + ".xlsx")
+long_df2["classification"] = long_df2[
+    [
+        "classification1",
+        "classification2",
+        "classification3",
+    ]
+].mode(axis=1)[0]
+long_df2["classification"] = long_df2.classification1
 long_df2 = long_df2.drop(columns=DROP_VARS)
 long_df2 = long_df2.rename(
     columns={
-        "response": "response_b",
+        "response1": "response_b",
         "classification": "classification_b",
         "fingerprint": "fingerprint_b",
     }
@@ -77,10 +95,9 @@ long_df.to_excel(
 # %%
 # %%
 
-
 long_df.agree.value_counts()
 
 # %%
-long_df.human_code.value_counts()
+# long_df.human_code.value_counts()
 
-long_df[long_df.human_code == 1].agree.value_counts()
+# long_df[long_df.human_code == 1].agree.value_counts()

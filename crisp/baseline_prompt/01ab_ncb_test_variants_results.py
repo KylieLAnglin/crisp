@@ -16,6 +16,15 @@ from crisp.library import classify
 # FILE = "ncb_variants_responses 2025-05-06 144 pm"
 FILE = "ncb_variants_responses 2025-05-06 316 pm"
 long_df = pd.read_excel(start.DATA_DIR + "temp/" + FILE + ".xlsx")
+
+# votecount across classification1, classification2, classification3
+long_df["classification"] = long_df[
+    [
+        "classification1",
+        "classification2",
+        "classification3",
+    ]
+].mode(axis=1)[0]
 # %%
 PROMPT_FILE = "ncb_variants"
 # import prompts from here
