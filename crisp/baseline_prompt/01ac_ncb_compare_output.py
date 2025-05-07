@@ -15,6 +15,8 @@ from crisp.library import classify
 
 FILE1 = "ncb_variants_responses 2025-05-06 144 pm"
 FILE2 = "ncb_variants_responses 2025-05-06 316 pm"
+FILE1 = "ncb_variants_responses 2025-05-06 857 pm"
+FILE2 = "ncb_variants_responses 2025-05-07 646 am"
 DROP_VARS = ["response2", "response3", "classification2", "classification3"]
 unique_vars = [
     "response",

@@ -74,7 +74,7 @@ prompt = formatted_prompts[1]
 text = df.text.iloc[0]
 messages = prompt + [{"role": "user", "content": text}]
 response = client.chat.completions.create(
-    model=start.MODEL, messages=messages, temperature=0, n=1, seed=start.SEED
+    model=start.MODEL, messages=messages, temperature=0.0001, n=1, seed=start.SEED
 )
 # print fingerprint
 print(response.system_fingerprint)
@@ -98,7 +98,7 @@ for prompt in formatted_prompts:
         response = client.chat.completions.create(
             model=start.MODEL,
             messages=messages,
-            temperature=0,
+            temperature=0.0001,
             n=3,
             seed=start.SEED,
         )
@@ -168,9 +168,9 @@ for combo in long_df.combo_id.unique():
     combo_df = long_df[long_df.combo_id == combo]
     part1_id = prompt_df.loc[prompt_df.combo_id == combo, "part1"].values[0]
     part2_id = prompt_df.loc[prompt_df.combo_id == combo, "part2"].values[0]
-    valid_indices = combo_df.dropna(subset=["human_code", "classification"]).index
+    valid_indices = combo_df.dropna(subset=["human_code", "classification1"]).index
     human_codes = combo_df.loc[valid_indices, "human_code"]
-    classifications = combo_df.loc[valid_indices, "classification"]
+    classifications = combo_df.loc[valid_indices, "classification1"]
     print(f"Combo {combo}")
     accuracy, precision, recall, f1 = classify.print_and_save_metrics(
         human_codes, classifications

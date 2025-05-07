@@ -14,7 +14,7 @@ from crisp.library import classify
 
 
 # FILE = "ncb_variants_responses 2025-05-06 144 pm"
-FILE = "ncb_variants_responses 2025-05-06 316 pm"
+FILE = "ncb_variants_responses 2025-05-06 857 pm"
 long_df = pd.read_excel(start.DATA_DIR + "temp/" + FILE + ".xlsx")
 
 # votecount across classification1, classification2, classification3
@@ -34,7 +34,7 @@ source_path = start.DATA_DIR + "prompts/" + PROMPT_FILE + ".xlsx"
 #     start.MAIN_DIR + "results/" + PROMPT_FILE + "_results 2025-05-06 144 pm.xlsx"
 # )
 destination_path = (
-    start.MAIN_DIR + "results/" + PROMPT_FILE + "_results 2025-05-06 316 pm.xlsx"
+    start.MAIN_DIR + "results/" + PROMPT_FILE + "_results 2025-05-06 857 pm.xlsx"
 )
 export_results.copy_file_and_paste(
     source_path, destination_path
