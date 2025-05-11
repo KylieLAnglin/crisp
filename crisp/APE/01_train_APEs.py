@@ -1,13 +1,13 @@
+# A3_ape_training.py
 # %%
-from openai import OpenAI
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from openai import OpenAI
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 
-from crisp.library import start
-from crisp.library import secrets
+from crisp.library import start, secrets
 
 # ------------------ CONSTANTS ------------------
 NUM_VARIANTS = 5
@@ -19,20 +19,28 @@ META_INSTRUCTIONS2 = "\nOutput only the new instruction."
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-PROMPT_FILE = "ncb_variants"
-PROMPT_PATH = start.MAIN_DIR + "results/" + PROMPT_FILE + "_results_dev.xlsx"
-prompt_df = pd.read_excel(PROMPT_PATH, sheet_name="combo_results")
+BASELINE_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_dev.xlsx"
+TRAIN_DATA_PATH = start.DATA_DIR + "clean/negative_core_beliefs.xlsx"
 
-# %%
-# ------------------ IMPORTS ------------------
-df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
-df = df[df.split_group == "train"]
-df = df.rename(columns={"human_code": "label"})
-df = df[df.text.notna()]
-df = df[df.label.notna()]
+TRACKING_PATHS = {
+    "top": {
+        "csv": start.RESULTS_DIR + "ncb_ape_top_results.csv",
+        "fig": start.RESULTS_DIR + "ncb_ape_evolution_top_train.png",
+    },
+    "bottom": {
+        "csv": start.RESULTS_DIR + "ncb_ape_bottom_results.csv",
+        "fig": start.RESULTS_DIR + "ncb_ape_evolution_top_train.png",
+    },
+}
+
+# ------------------ LOAD DATA ------------------
+df = pd.read_excel(TRAIN_DATA_PATH)
+df = df[df.split_group == "train"].rename(columns={"human_code": "label"})
+df = df[df.text.notna() & df.label.notna()]
+
+prompt_df = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
 
 
-# %%
 # ------------------ FUNCTIONS ------------------
 def generate_prompt_variants(base_prompt, num_variants):
     variants = []
@@ -56,10 +64,7 @@ def apply_prompt_to_classify(df, prompt):
             {"role": "user", "content": text},
         ]
         response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=0.00001,
-            n=1,
+            model=MODEL, messages=messages, temperature=0.00001, n=1
         )
         prediction = parse_prediction(response.choices[0].message.content)
         predictions.append(prediction)
@@ -72,37 +77,24 @@ def parse_prediction(response_text):
         return 1
     elif "no" in response_text:
         return 0
-    else:
-        return 0
+    return 0
 
 
 def evaluate_prompt(df, prompt):
     preds = apply_prompt_to_classify(df, prompt)
-    true_labels = df["label"].tolist()
-    return f1_score(true_labels, preds)
+    return f1_score(df["label"].tolist(), preds)
 
 
-# %%
-# ------------------ SCRIPT BLOCK ------------------
+# ------------------ MAIN SCRIPT ------------------
 cases = [
-    (
-        "best",
-        prompt_df["F1"].idxmax(),
-        "ncb_ape_best",
-        "prompt_evolution_tracking_best.png",
-    ),
-    (
-        "worst",
-        prompt_df["F1"].idxmin(),
-        "ncb_ape_worst",
-        "prompt_evolution_tracking_worst.png",
-    ),
+    ("top", prompt_df["F1"].idxmax()),
+    ("bottom", prompt_df["F1"].idxmin()),
 ]
 
-for mode, index, csv_name, fig_name in cases:
+for mode, index in cases:
     print(f"\n======== Evaluating {mode.upper()} Prompt Seed ========")
-    OUTPUT_TRACKING_FILE = start.DATA_DIR + f"temp/{csv_name}.csv"
-    FIGURE_FILE = start.RESULTS_DIR + fig_name
+    OUTPUT_TRACKING_FILE = TRACKING_PATHS[mode]["csv"]
+    FIGURE_FILE = TRACKING_PATHS[mode]["fig"]
 
     STARTING_PROMPT = prompt_df.loc[index, "Prompt"]
     tracking_records = []
@@ -144,26 +136,16 @@ for mode, index, csv_name, fig_name in cases:
             f"F1: {row['f1_score']:.4f} | Generation {row['generation']} Variant {row['variant_id']}\nPrompt: {row['prompt']}\n"
         )
 
-# %%
-for mode, index, csv_name, fig_name in cases:
-    OUTPUT_TRACKING_FILE = start.DATA_DIR + f"temp/{csv_name}.csv"
-    FIGURE_FILE = start.RESULTS_DIR + fig_name
-
-    # Load tracking data
-    tracking_df = pd.read_csv(OUTPUT_TRACKING_FILE)
+# ------------------ PLOT RESULTS ------------------
+for mode, _ in cases:
+    tracking_df = pd.read_csv(TRACKING_PATHS[mode]["csv"])
     tracking_df["generation"] = tracking_df["generation"].astype(int)
-
-    # plot F1 scores across generations
     tracking_df["f1_score"] = tracking_df["f1_score"].astype(float)
-    # Plotting
+
     plt.figure(figsize=(10, 6))
     plt.scatter(
-        tracking_df["generation"],
-        tracking_df["f1_score"],
-        color="black",
-        alpha=0.7,
+        tracking_df["generation"], tracking_df["f1_score"], color="black", alpha=0.7
     )
-
     plt.plot(
         tracking_df.groupby("generation")["f1_score"].max(),
         marker="o",
@@ -176,6 +158,6 @@ for mode, index, csv_name, fig_name in cases:
     plt.title(f"Prompt F1 Scores Across Generations - {mode.title()} Seed")
     plt.grid(True, linestyle="--", color="gray", alpha=0.7)
     plt.tight_layout()
-    plt.savefig(FIGURE_FILE)
+    plt.savefig(TRACKING_PATHS[mode]["fig"])
     plt.show()
 # %%

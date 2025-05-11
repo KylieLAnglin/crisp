@@ -1,4 +1,3 @@
-# A2_baseline_dev.py
 # %%
 import pandas as pd
 from openai import OpenAI
@@ -8,14 +7,17 @@ from datetime import datetime
 import os
 
 from crisp.library import start, secrets
-from crisp.library import format_prompts, classify, metric_standard_errors
+from crisp.library import format_prompts, classify
 
 # ------------------ CONSTANTS ------------------
-IMPORT_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_train.xlsx"
-IMPORT_PROMPT_PATH = start.DATA_DIR + "prompts/ncb_baseline_variants.xlsx"
 
-EXPORT_RESPONSE_PATH = start.DATA_DIR + "responses_dev/ncb_variants_responses_dev.xlsx"
-EXPORT_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_dev.xlsx"
+IMPORT_PROMPT_PATH = start.DATA_DIR + f"prompts/ncb_baseline_variants.xlsx"
+
+EXPORT_RESPONSE_PATH = (
+    start.DATA_DIR + "responses_train/ncb_variants_responses_train.xlsx"
+)
+EXPORT_RESULTS_PATH = start.MAIN_DIR + f"results/ncb_variants_results_train.xlsx"
+
 
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -23,20 +25,16 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 SAMPLE = False
 # ------------------ LOAD DATA ------------------
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
-df = df[df.split_group == "dev"]
+df = df[df.split_group == "train"]
 if SAMPLE:
-    df = df.sample(5)
-# ------------------ LOAD PROMPTS ------------------
-training_results = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
-tbp_id = training_results.loc[training_results["F1"].idxmax(), "Baseline Prompt ID"]
-bbp_id = training_results.loc[training_results["F1"].idxmin(), "Baseline Prompt ID"]
+    df = df.sample(5, random_state=start.SEED)
 
 prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="variants")
-prompt_df = prompt_df[prompt_df.baseline_prompt_id.isin([tbp_id, bbp_id])]
+prompt_df["baseline_prompt_id"] = prompt_df.index
+full_prompt_texts = prompt_df["prompt"].tolist()
 
-# ------------------ FORMAT PROMPTS ------------------
 formatted_prompts = []
-for prompt_text in prompt_df["prompt"]:
+for prompt_text in full_prompt_texts:
     message = format_prompts.format_system_message(prompt_text)
     formatted_prompts.append([message])
 
@@ -46,7 +44,7 @@ for loop_num in [1, 2]:
     for prompt in formatted_prompts:
         prompt_text = prompt[0]["content"]
         baseline_prompt_id = prompt_df[
-            prompt_df["prompt"] == prompt_text
+            prompt_df.prompt == prompt_text
         ].baseline_prompt_id.iloc[0]
 
         for text, participant_id, study, question, human_code in tqdm(
@@ -91,12 +89,12 @@ for loop_num in [1, 2]:
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
 
-# ------------------ CREATE RESULTS FILE ------------------
+# ------------------ CREATE DESTINATION FILE ------------------
 if not os.path.exists(EXPORT_RESULTS_PATH):
     wb = Workbook()
     wb.save(EXPORT_RESULTS_PATH)
 
-# ------------------ WRITE METRICS ------------------
+# ------------------ EVALUATE PROMPTS ------------------
 wb = load_workbook(EXPORT_RESULTS_PATH)
 if "results" in wb.sheetnames:
     del wb["results"]
@@ -104,14 +102,12 @@ ws = wb.create_sheet("results")
 
 headers = [
     "Baseline Prompt ID",
+    "Part 1 ID",
+    "Part 2 ID",
     "Accuracy",
     "Precision",
     "Recall",
     "F1",
-    "Accuracy SE",
-    "Precision SE",
-    "Recall SE",
-    "F1 SE",
     "Prompt",
 ]
 for col, header in enumerate(headers, 1):
@@ -120,38 +116,25 @@ for col, header in enumerate(headers, 1):
 row = 2
 for bp_id in long_df.baseline_prompt_id.unique():
     combo_df = long_df[long_df.baseline_prompt_id == bp_id]
-    full_df = combo_df.copy()
-
-    # Full metrics
-    valid = full_df.dropna(subset=["human_code", "classification"])
+    part1_id = prompt_df.loc[prompt_df.baseline_prompt_id == bp_id, "part1"].values[0]
+    part2_id = prompt_df.loc[prompt_df.baseline_prompt_id == bp_id, "part2"].values[0]
+    valid_indices = combo_df.dropna(subset=["human_code", "classification"]).index
+    human_codes = combo_df.loc[valid_indices, "human_code"]
+    classifications = combo_df.loc[valid_indices, "classification"]
     accuracy, precision, recall, f1 = classify.print_and_save_metrics(
-        valid["human_code"], valid["classification"]
+        human_codes, classifications
     )
 
-    # Loop 1, Response 1 subset
-    subset = full_df[(full_df.response_number == 1) & (full_df.loop_num == 1)]
-    subset_valid = subset.dropna(subset=["human_code", "classification"])
-    y_true = subset_valid["human_code"]
-    y_pred = subset_valid["classification"]
-    _, acc_se = metric_standard_errors.bootstrap_accuracy(y_true, y_pred, 1000, 12)
-    _, prec_se = metric_standard_errors.bootstrap_precision(y_true, y_pred, 1000, 12)
-    _, rec_se = metric_standard_errors.bootstrap_recall(y_true, y_pred, 1000, 12)
-    _, f1_se = metric_standard_errors.bootstrap_f1(y_true, y_pred, 1000, 12)
-
-    prompt_text = combo_df["prompt"].iloc[0]
     results = [
         bp_id,
+        part1_id,
+        part2_id,
         accuracy,
         precision,
         recall,
         f1,
-        acc_se,
-        prec_se,
-        rec_se,
-        f1_se,
-        prompt_text,
+        combo_df.prompt.iloc[0],
     ]
-
     for col, val in enumerate(results, 1):
         ws.cell(
             row=row, column=col, value=round(val, 3) if isinstance(val, float) else val

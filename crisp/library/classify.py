@@ -40,7 +40,7 @@ def create_binary_classification_from_response(response):
 
 def print_and_save_metrics(human_codes, classifications):
     accuracy = accuracy_score(human_codes, classifications)
-    precision = precision_score(human_codes, classifications, zero_division=0)
+    precision = precision_score(human_codes, classifications)
     recall = recall_score(human_codes, classifications)
     f1 = f1_score(human_codes, classifications)
     print(f"Accuracy: {accuracy}")

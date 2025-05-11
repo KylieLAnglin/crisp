@@ -1,85 +1,58 @@
+# 02_dev_persona.py
 # %%
 import pandas as pd
 from openai import OpenAI
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 from tqdm import tqdm
 from datetime import datetime
+import os
 
-from crisp.library import start
-from crisp.library import secrets
-from crisp.library import format_prompts
-from crisp.library import classify
-from crisp.library import metric_standard_errors
+from crisp.library import start, secrets
+from crisp.library import format_prompts, classify, metric_standard_errors
 
 # ------------------ CONSTANTS ------------------
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 MODEL = start.MODEL
-GENERATION_TEMPERATURE = 0.00001
-NUM_RESPONSES = 5
 SEED = start.SEED
-DEV_OUTPUT_PATH = start.DATA_DIR + "temp/ncb_persona_responses_dev.xlsx"
-DESTINATION_PATH = start.MAIN_DIR + "results/ncb_persona_results_dev.xlsx"
-PERSONA_RESULTS_PATH = start.DATA_DIR + "temp/ncb_persona_training_results.csv"
+TEMPERATURE = 0.00001
+NUM_RESPONSES = 5
 
-PROMPT_PATH_BEST = start.DATA_DIR + "temp/ncb_ape_best.csv"
-PROMPT_PATH_WORST = start.DATA_DIR + "temp/ncb_ape_worst.csv"
+RESULTS_TRAIN_PATH = start.MAIN_DIR + "results/ncb_persona_results_train.xlsx"
+RESPONSE_PATH = start.DATA_DIR + "responses_dev/ncb_persona_responses_dev.xlsx"
+RESULTS_PATH = start.MAIN_DIR + "results/ncb_persona_results_dev.xlsx"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ------------------ LOAD BEST PERSONAS ------------------
-persona_df = pd.read_csv(PERSONA_RESULTS_PATH)
-best_persona = (
-    persona_df[persona_df.prompt_type == "best"]
-    .sort_values("f1_score", ascending=False)
-    .iloc[0]["persona"]
+results_df = pd.read_excel(RESULTS_TRAIN_PATH, sheet_name="results")
+top_combo = (
+    results_df[results_df["Baseline Category"] == "top"]
+    .sort_values(by="F1", ascending=False)
+    .iloc[0]
 )
-worst_persona = (
-    persona_df[persona_df.prompt_type == "worst"]
-    .sort_values("f1_score", ascending=False)
-    .iloc[0]["persona"]
+bottom_combo = (
+    results_df[results_df["Baseline Category"] == "bottom"]
+    .sort_values(by="F1", ascending=False)
+    .iloc[0]
 )
-print(f"Using best persona for BEST prompt: {best_persona}")
-print(f"Using best persona for WORST prompt: {worst_persona}")
 
-# ------------------ LOAD PROMPTS ------------------
-prompt_df1 = pd.read_csv(PROMPT_PATH_BEST)
-prompt_df1["prompt_id"] = (
-    "best" + prompt_df1.generation.astype(str) + "_" + prompt_df1.variant_id.astype(str)
-)
-prompt_df1 = prompt_df1.set_index("prompt_id")
-max_f1_index1 = prompt_df1["f1_score"].idxmax()
-prompt_df1 = prompt_df1.loc[[max_f1_index1]]
-prompt_df1["persona"] = best_persona
-
-prompt_df2 = pd.read_csv(PROMPT_PATH_WORST)
-prompt_df2["prompt_id"] = (
-    "worst"
-    + prompt_df2.generation.astype(str)
-    + "_"
-    + prompt_df2.variant_id.astype(str)
-)
-prompt_df2 = prompt_df2.set_index("prompt_id")
-max_f1_index2 = prompt_df2["f1_score"].idxmax()
-prompt_df2 = prompt_df2.loc[[max_f1_index2]]
-prompt_df2["persona"] = worst_persona
-
-prompt_df = pd.concat([prompt_df1, prompt_df2])
-prompt_df["text"] = prompt_df["persona"] + "\n" + prompt_df["prompt"]
-prompt_df["combo_id"] = prompt_df.index
+selected_prompts = pd.DataFrame([top_combo, bottom_combo])
+selected_prompts["combo_id"] = ["top_best_persona", "bottom_best_persona"]
 
 # ------------------ FORMAT PROMPTS ------------------
 formatted_prompts = []
 prompt_mapping = {}
-for combo_id, prompt_text in zip(prompt_df.combo_id, prompt_df.text):
-    message = format_prompts.format_system_message(prompt_text)
-    formatted_prompts.append([message])
-    prompt_mapping[prompt_text] = combo_id
+for row in selected_prompts.itertuples():
+    msg = format_prompts.format_system_message(row.Prompt)
+    formatted_prompts.append([msg])
+    prompt_mapping[msg["content"]] = row.combo_id
 
-# ------------------ LOAD TEXT DATA ------------------
+# ------------------ LOAD DEV TEXT DATA ------------------
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
 df = df[df.split_group == "dev"]
+df = df[df.text.notna() & df.human_code.notna()]
 
-# ------------------ COLLECT RESPONSES ------------------
+# ------------------ GENERATE RESPONSES ------------------
 response_rows = []
 for loop_num in [1, 2]:
     for prompt in formatted_prompts:
@@ -89,13 +62,14 @@ for loop_num in [1, 2]:
         for text, participant_id, study, question, human_code in tqdm(
             zip(df.text, df.participant_id, df.study, df.question, df.human_code),
             total=len(df),
+            desc=f"{combo_id} (Loop {loop_num})",
         ):
             timestamp = datetime.now().isoformat()
             messages = prompt + [{"role": "user", "content": text}]
             response = client.chat.completions.create(
                 model=MODEL,
                 messages=messages,
-                temperature=GENERATION_TEMPERATURE,
+                temperature=TEMPERATURE,
                 n=NUM_RESPONSES,
                 seed=SEED,
             )
@@ -125,13 +99,19 @@ for loop_num in [1, 2]:
                     }
                 )
 
+# ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
-long_df.to_excel(DEV_OUTPUT_PATH, index=False)
+long_df.to_excel(RESPONSE_PATH, index=False)
 
-# ------------------ EXPORT METRICS ------------------
-wb = load_workbook(DESTINATION_PATH)
-wb.create_sheet("combo_results")
-ws = wb["combo_results"]
+# ------------------ EVALUATE PROMPTS ------------------
+if not os.path.exists(RESULTS_PATH):
+    wb = Workbook()
+    wb.save(RESULTS_PATH)
+
+wb = load_workbook(RESULTS_PATH)
+if "results" in wb.sheetnames:
+    del wb["results"]
+ws = wb.create_sheet("results")
 
 headers = [
     "Combo",
@@ -149,50 +129,38 @@ for col, header in enumerate(headers, 1):
     ws.cell(row=1, column=col, value=header)
 
 row = 2
+FILTER = (long_df.response_number == 1) & (long_df.loop_num == 1)
+
 for combo in long_df.combo_id.unique():
-    combo_df = long_df[
-        (long_df.combo_id == combo)
-        & (long_df.response_number == 1)
-        & (long_df.loop_num == 1)
-    ]
-    valid_indices = combo_df.dropna(subset=["human_code", "classification"]).index
-    human_codes = combo_df.loc[valid_indices, "human_code"]
-    classifications = combo_df.loc[valid_indices, "classification"]
+    sub_df = long_df[(long_df.combo_id == combo) & FILTER]
+    valid = sub_df.dropna(subset=["human_code", "classification"])
+    y_true = valid["human_code"]
+    y_pred = valid["classification"]
 
-    accuracy, precision, recall, f1 = classify.print_and_save_metrics(
-        human_codes, classifications
-    )
-    _, accuracy_se = metric_standard_errors.bootstrap_accuracy(
-        human_codes, classifications, n_bootstraps=1000, random_state=12
-    )
-    _, precision_se = metric_standard_errors.bootstrap_precision(
-        human_codes, classifications, n_bootstraps=1000, random_state=12
-    )
-    _, recall_se = metric_standard_errors.bootstrap_recall(
-        human_codes, classifications, n_bootstraps=1000, random_state=12
-    )
-    _, f1_se = metric_standard_errors.bootstrap_f1(
-        human_codes, classifications, n_bootstraps=1000, random_state=12
-    )
+    accuracy, precision, recall, f1 = classify.print_and_save_metrics(y_true, y_pred)
+    _, acc_se = metric_standard_errors.bootstrap_accuracy(y_true, y_pred, 1000, 12)
+    _, prec_se = metric_standard_errors.bootstrap_precision(y_true, y_pred, 1000, 12)
+    _, rec_se = metric_standard_errors.bootstrap_recall(y_true, y_pred, 1000, 12)
+    _, f1_se = metric_standard_errors.bootstrap_f1(y_true, y_pred, 1000, 12)
 
+    prompt_text = sub_df["prompt"].iloc[0]
     results = [
         combo,
         accuracy,
         precision,
         recall,
         f1,
-        accuracy_se,
-        precision_se,
-        recall_se,
+        acc_se,
+        prec_se,
+        rec_se,
         f1_se,
-        combo_df.prompt.iloc[0],
+        prompt_text,
     ]
     for col, val in enumerate(results, 1):
         ws.cell(
             row=row, column=col, value=round(val, 2) if isinstance(val, float) else val
         )
-
     row += 1
 
-wb.save(DESTINATION_PATH)
+wb.save(RESULTS_PATH)
 # %%

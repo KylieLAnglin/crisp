@@ -1,16 +1,14 @@
+# A4_ape_dev.py
 # %%
 import pandas as pd
 from openai import OpenAI
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from tqdm import tqdm
 from datetime import datetime
+import os
 
-from crisp.library import start
-from crisp.library import secrets
-from crisp.library import export_results
-from crisp.library import format_prompts
-from crisp.library import classify
-from crisp.library import metric_standard_errors
+from crisp.library import start, secrets
+from crisp.library import format_prompts, classify, metric_standard_errors
 
 # ------------------ CONSTANTS ------------------
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
@@ -18,25 +16,26 @@ MODEL = start.MODEL
 GENERATION_TEMPERATURE = 0.00001
 NUM_RESPONSES = 5
 SEED = start.SEED
-DEV_OUTPUT_PATH = start.DATA_DIR + "temp/ncb_ape_responses_dev.xlsx"
-PROMPT_PATH_BEST = start.DATA_DIR + "temp/ncb_ape_best.csv"
-PROMPT_PATH_WORST = start.DATA_DIR + "temp/ncb_ape_worst.csv"
-DESTINATION_PATH = start.MAIN_DIR + "results/ncb_ape_results_dev.xlsx"
+
+PROMPT_PATH_TOP = start.RESULTS_DIR + "ncb_ape_top_results.csv"
+PROMPT_PATH_BOTTOM = start.RESULTS_DIR + "ncb_ape_bottom_results.csv"
+RESPONSE_PATH = start.DATA_DIR + "responses_dev/ncb_ape_responses_dev.xlsx"
+RESULTS_PATH = start.MAIN_DIR + "results/ncb_ape_results_dev.xlsx"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ------------------ LOAD PROMPTS ------------------
-prompt_df1 = pd.read_csv(PROMPT_PATH_BEST)
+prompt_df1 = pd.read_csv(PROMPT_PATH_TOP)
 prompt_df1["prompt_id"] = (
-    "best" + prompt_df1.generation.astype(str) + "_" + prompt_df1.variant_id.astype(str)
+    "top" + prompt_df1.generation.astype(str) + "_" + prompt_df1.variant_id.astype(str)
 )
 prompt_df1 = prompt_df1.set_index("prompt_id")
 max_f1_index1 = prompt_df1["f1_score"].idxmax()
 prompt_df1 = prompt_df1.loc[[max_f1_index1]]
 
-prompt_df2 = pd.read_csv(PROMPT_PATH_WORST)
+prompt_df2 = pd.read_csv(PROMPT_PATH_BOTTOM)
 prompt_df2["prompt_id"] = (
-    "worst"
+    "bottom"
     + prompt_df2.generation.astype(str)
     + "_"
     + prompt_df2.variant_id.astype(str)
@@ -46,13 +45,13 @@ max_f1_index2 = prompt_df2["f1_score"].idxmax()
 prompt_df2 = prompt_df2.loc[[max_f1_index2]]
 
 prompt_df = pd.concat([prompt_df1, prompt_df2])
-prompt_df["text"] = prompt_df["prompt"]
+prompt_df["prompt"] = prompt_df["prompt"]
 prompt_df["combo_id"] = prompt_df.index
 
 # ------------------ FORMAT PROMPTS ------------------
 formatted_prompts = []
 prompt_mapping = {}
-for combo_id, prompt_text in zip(prompt_df.combo_id, prompt_df.text):
+for combo_id, prompt_text in zip(prompt_df.combo_id, prompt_df.prompt):
     message = format_prompts.format_system_message(prompt_text)
     formatted_prompts.append([message])
     prompt_mapping[prompt_text] = combo_id
@@ -108,12 +107,17 @@ for loop_num in [1, 2]:
                 )
 
 long_df = pd.DataFrame(response_rows)
-long_df.to_excel(DEV_OUTPUT_PATH, index=False)
-# %%
+long_df.to_excel(RESPONSE_PATH, index=False)
+
 # ------------------ EXPORT METRICS ------------------
-wb = load_workbook(DESTINATION_PATH)
-wb.create_sheet("combo_results")
-ws = wb["combo_results"]
+if not os.path.exists(RESULTS_PATH):
+    wb = Workbook()
+    wb.save(RESULTS_PATH)
+
+wb = load_workbook(RESULTS_PATH)
+if "results" in wb.sheetnames:
+    del wb["results"]
+ws = wb.create_sheet("results")
 
 headers = [
     "Combo",
@@ -177,5 +181,5 @@ for combo in long_df.combo_id.unique():
 
     row += 1
 
-wb.save(DESTINATION_PATH)
+wb.save(RESULTS_PATH)
 # %%
