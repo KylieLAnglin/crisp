@@ -6,6 +6,7 @@ from openpyxl import Workbook, load_workbook
 from tqdm import tqdm
 from datetime import datetime
 import os
+import re
 
 from crisp.library import start, secrets
 from crisp.library import format_prompts, classify, metric_standard_errors
@@ -27,6 +28,21 @@ COT_SUFFIX = (
 )
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+
+# ------------------ FUNCTION: PARSE FINAL ANSWER ------------------
+def parse_prediction_cot(response_text: str) -> int:
+    """
+    Extract final binary classification from a CoT response using:
+    "Final Answer: Yes" or "Final Answer: No"
+    """
+    match = re.search(
+        r"final answer\s*:\s*(yes|no)", response_text.strip(), re.IGNORECASE
+    )
+    if match:
+        return 1 if match.group(1).lower() == "yes" else 0
+    return 0  # fallback default
+
 
 # ------------------ LOAD BASELINE PROMPTS ------------------
 baseline_results = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
@@ -80,9 +96,7 @@ for loop_num in [1, 2]:
 
             for i, choice in enumerate(response.choices):
                 cleaned_response = choice.message.content
-                classification = classify.create_binary_classification_from_response(
-                    cleaned_response
-                )
+                classification = parse_prediction_cot(cleaned_response)
 
                 response_rows.append(
                     {
@@ -142,10 +156,10 @@ for combo in long_df.combo_id.unique():
     y_pred = valid["classification"]
 
     accuracy, precision, recall, f1 = classify.print_and_save_metrics(y_true, y_pred)
-    _, acc_se = metric_standard_errors.bootstrap_accuracy(y_true, y_pred, 1000, 12)
-    _, prec_se = metric_standard_errors.bootstrap_precision(y_true, y_pred, 1000, 12)
-    _, rec_se = metric_standard_errors.bootstrap_recall(y_true, y_pred, 1000, 12)
-    _, f1_se = metric_standard_errors.bootstrap_f1(y_true, y_pred, 1000, 12)
+    _, acc_se = metric_standard_errors.bootstrap_accuracy(y_true, y_pred, 1000)
+    _, prec_se = metric_standard_errors.bootstrap_precision(y_true, y_pred, 1000)
+    _, rec_se = metric_standard_errors.bootstrap_recall(y_true, y_pred, 1000)
+    _, f1_se = metric_standard_errors.bootstrap_f1(y_true, y_pred, 1000)
 
     prompt_text = sub_df["prompt"].iloc[0]
     results = [
