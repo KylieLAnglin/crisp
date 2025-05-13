@@ -11,18 +11,17 @@ from crisp.library import format_prompts, classify
 
 # ------------------ CONSTANTS ------------------
 
-IMPORT_PROMPT_PATH = start.DATA_DIR + f"prompts/ncb_baseline_variants.xlsx"
-
+IMPORT_PROMPT_PATH = start.DATA_DIR + "prompts/ncb_baseline_variants.xlsx"
 EXPORT_RESPONSE_PATH = (
     start.DATA_DIR + "responses_train/ncb_variants_responses_train.xlsx"
 )
-EXPORT_RESULTS_PATH = start.MAIN_DIR + f"results/ncb_variants_results_train.xlsx"
-
+EXPORT_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_train.xlsx"
 
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 SAMPLE = False
+
 # ------------------ LOAD DATA ------------------
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
 df = df[df.split_group == "train"]
@@ -38,53 +37,48 @@ for prompt_text in full_prompt_texts:
     message = format_prompts.format_system_message(prompt_text)
     formatted_prompts.append([message])
 
+# %%
 # ------------------ COLLECT RESPONSES ------------------
 response_rows = []
-for loop_num in [1, 2]:
-    for prompt in formatted_prompts:
-        prompt_text = prompt[0]["content"]
-        baseline_prompt_id = prompt_df[
-            prompt_df.prompt == prompt_text
-        ].baseline_prompt_id.iloc[0]
+for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_prompts):
+    prompt_text = prompt[0]["content"]
 
-        for text, participant_id, study, question, human_code in tqdm(
-            zip(df.text, df.participant_id, df.study, df.question, df.human_code),
-            total=len(df),
-        ):
-            timestamp = datetime.now().isoformat()
-            messages = prompt + [{"role": "user", "content": text}]
-            response = client.chat.completions.create(
-                model=start.MODEL,
-                messages=messages,
-                temperature=0.00001,
-                n=5,
-                seed=start.SEED,
-            )
+    for text, participant_id, study, question, human_code in tqdm(
+        zip(df.text, df.participant_id, df.study, df.question, df.human_code),
+        total=len(df),
+        desc=f"Prompt ID: {baseline_prompt_id}",
+    ):
+        timestamp = datetime.now().isoformat()
+        messages = prompt + [{"role": "user", "content": text}]
+        response = client.chat.completions.create(
+            model=start.MODEL,
+            messages=messages,
+            temperature=0.00001,
+            n=1,
+            seed=start.SEED,
+        )
 
-            for i, choice in enumerate(response.choices):
-                cleaned_response = choice.message.content
-                classification = classify.create_binary_classification_from_response(
-                    cleaned_response
-                )
+        cleaned_response = response.choices[0].message.content
+        classification = classify.create_binary_classification_from_response(
+            cleaned_response
+        )
 
-                response_rows.append(
-                    {
-                        "participant_id": participant_id,
-                        "study": study,
-                        "question": question,
-                        "text": text,
-                        "human_code": human_code,
-                        "response": cleaned_response,
-                        "classification": classification,
-                        "prompt": prompt_text,
-                        "model": start.MODEL,
-                        "fingerprint": response.system_fingerprint,
-                        "baseline_prompt_id": baseline_prompt_id,
-                        "response_number": i + 1,
-                        "loop_num": loop_num,
-                        "timestamp": timestamp,
-                    }
-                )
+        response_rows.append(
+            {
+                "participant_id": participant_id,
+                "study": study,
+                "question": question,
+                "text": text,
+                "human_code": human_code,
+                "response": cleaned_response,
+                "classification": classification,
+                "prompt": prompt_text,
+                "model": start.MODEL,
+                "fingerprint": response.system_fingerprint,
+                "baseline_prompt_id": baseline_prompt_id,
+                "timestamp": timestamp,
+            }
+        )
 
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
@@ -102,8 +96,6 @@ ws = wb.create_sheet("results")
 
 headers = [
     "Baseline Prompt ID",
-    "Part 1 ID",
-    "Part 2 ID",
     "Accuracy",
     "Precision",
     "Recall",
@@ -116,8 +108,6 @@ for col, header in enumerate(headers, 1):
 row = 2
 for bp_id in long_df.baseline_prompt_id.unique():
     combo_df = long_df[long_df.baseline_prompt_id == bp_id]
-    part1_id = prompt_df.loc[prompt_df.baseline_prompt_id == bp_id, "part1"].values[0]
-    part2_id = prompt_df.loc[prompt_df.baseline_prompt_id == bp_id, "part2"].values[0]
     valid_indices = combo_df.dropna(subset=["human_code", "classification"]).index
     human_codes = combo_df.loc[valid_indices, "human_code"]
     classifications = combo_df.loc[valid_indices, "classification"]
@@ -127,8 +117,6 @@ for bp_id in long_df.baseline_prompt_id.unique():
 
     results = [
         bp_id,
-        part1_id,
-        part2_id,
         accuracy,
         precision,
         recall,

@@ -17,6 +17,7 @@ def combine_prompt_text_components(prompt_components, prompt_combos):
 
 
 def format_system_message(text):
+    text = text + " Text: "
     return {
         "role": "system",
         "content": text,

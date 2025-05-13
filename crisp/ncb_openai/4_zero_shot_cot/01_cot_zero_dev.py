@@ -11,12 +11,12 @@ import re
 from crisp.library import start, secrets
 from crisp.library import format_prompts, classify, metric_standard_errors
 
+SAMPLE = False
 # ------------------ CONSTANTS ------------------
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 MODEL = start.MODEL
 SEED = start.SEED
 TEMPERATURE = 0.00001
-NUM_RESPONSES = 5
 
 BASELINE_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_dev.xlsx"
 RESPONSE_PATH = start.DATA_DIR + "responses_dev/ncb_cot_zero_responses_dev.xlsx"
@@ -48,6 +48,8 @@ def parse_prediction_cot(response_text: str) -> int:
 baseline_results = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
 top_prompt = baseline_results.loc[baseline_results["F1"].idxmax(), "Prompt"]
 bottom_prompt = baseline_results.loc[baseline_results["F1"].idxmin(), "Prompt"]
+top_prompt = top_prompt.replace("Text:", "")
+bottom_prompt = bottom_prompt.replace("Text:", "")
 
 top_cot = top_prompt + COT_SUFFIX
 bottom_cot = bottom_prompt + COT_SUFFIX
@@ -71,51 +73,49 @@ for row in prompt_df.itertuples():
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
 df = df[df.split_group == "dev"]
 df = df[df.text.notna() & df.human_code.notna()]
-
+if SAMPLE:
+    df = df.sample(5)
 # ------------------ GENERATE RESPONSES ------------------
 response_rows = []
-for loop_num in [1, 2]:
-    for prompt in formatted_prompts:
-        prompt_text = prompt[0]["content"]
-        combo_id = prompt_mapping[prompt_text]
+for prompt in formatted_prompts:
+    prompt_text = prompt[0]["content"]
+    combo_id = prompt_mapping[prompt_text]
 
-        for text, participant_id, study, question, human_code in tqdm(
-            zip(df.text, df.participant_id, df.study, df.question, df.human_code),
-            total=len(df),
-            desc=f"{combo_id} (Loop {loop_num})",
-        ):
-            timestamp = datetime.now().isoformat()
-            messages = prompt + [{"role": "user", "content": text}]
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                temperature=TEMPERATURE,
-                n=NUM_RESPONSES,
-                seed=SEED,
+    for text, participant_id, study, question, human_code in tqdm(
+        zip(df.text, df.participant_id, df.study, df.question, df.human_code),
+        total=len(df),
+        desc=f"{combo_id})",
+    ):
+        timestamp = datetime.now().isoformat()
+        messages = prompt + [{"role": "user", "content": text}]
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            n=1,
+            seed=SEED,
+        )
+
+        for i, choice in enumerate(response.choices):
+            cleaned_response = choice.message.content
+            classification = parse_prediction_cot(cleaned_response)
+
+            response_rows.append(
+                {
+                    "participant_id": participant_id,
+                    "study": study,
+                    "question": question,
+                    "text": text,
+                    "human_code": human_code,
+                    "response": cleaned_response,
+                    "classification": classification,
+                    "prompt": prompt_text,
+                    "model": MODEL,
+                    "fingerprint": response.system_fingerprint,
+                    "combo_id": combo_id,
+                    "timestamp": timestamp,
+                }
             )
-
-            for i, choice in enumerate(response.choices):
-                cleaned_response = choice.message.content
-                classification = parse_prediction_cot(cleaned_response)
-
-                response_rows.append(
-                    {
-                        "participant_id": participant_id,
-                        "study": study,
-                        "question": question,
-                        "text": text,
-                        "human_code": human_code,
-                        "response": cleaned_response,
-                        "classification": classification,
-                        "prompt": prompt_text,
-                        "model": MODEL,
-                        "fingerprint": response.system_fingerprint,
-                        "combo_id": combo_id,
-                        "response_number": i + 1,
-                        "loop_num": loop_num,
-                        "timestamp": timestamp,
-                    }
-                )
 
 # ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
@@ -147,10 +147,9 @@ for col, header in enumerate(headers, 1):
     ws.cell(row=1, column=col, value=header)
 
 row = 2
-FILTER = (long_df.response_number == 1) & (long_df.loop_num == 1)
 
 for combo in long_df.combo_id.unique():
-    sub_df = long_df[(long_df.combo_id == combo) & FILTER]
+    sub_df = long_df[(long_df.combo_id == combo)]
     valid = sub_df.dropna(subset=["human_code", "classification"])
     y_true = valid["human_code"]
     y_pred = valid["classification"]

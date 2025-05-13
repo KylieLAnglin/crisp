@@ -33,64 +33,58 @@ bbp_id = training_results.loc[training_results["F1"].idxmin(), "Baseline Prompt 
 
 prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="variants")
 prompt_df = prompt_df[prompt_df.baseline_prompt_id.isin([tbp_id, bbp_id])]
-
+prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text: ", "")
+# %%
 # ------------------ FORMAT PROMPTS ------------------
 formatted_prompts = []
 for prompt_text in prompt_df["prompt"]:
     message = format_prompts.format_system_message(prompt_text)
     formatted_prompts.append([message])
-
-# ------------------ COLLECT RESPONSES ------------------
+# %%
+# ------------------ COLLECT RESPONSES ------------------# ------------------ COLLECT RESPONSES ------------------
 response_rows = []
-for loop_num in [1, 2]:
-    for prompt in formatted_prompts:
-        prompt_text = prompt[0]["content"]
-        baseline_prompt_id = prompt_df[
-            prompt_df["prompt"] == prompt_text
-        ].baseline_prompt_id.iloc[0]
+for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_prompts):
+    prompt_text = prompt[0]["content"]
 
-        for text, participant_id, study, question, human_code in tqdm(
-            zip(df.text, df.participant_id, df.study, df.question, df.human_code),
-            total=len(df),
-        ):
-            timestamp = datetime.now().isoformat()
-            messages = prompt + [{"role": "user", "content": text}]
-            response = client.chat.completions.create(
-                model=start.MODEL,
-                messages=messages,
-                temperature=0.00001,
-                n=5,
-                seed=start.SEED,
-            )
+    for text, participant_id, study, question, human_code in tqdm(
+        zip(df.text, df.participant_id, df.study, df.question, df.human_code),
+        total=len(df),
+        desc=f"Prompt ID: {baseline_prompt_id}",
+    ):
+        timestamp = datetime.now().isoformat()
+        messages = prompt + [{"role": "user", "content": text}]
+        response = client.chat.completions.create(
+            model=start.MODEL,
+            messages=messages,
+            temperature=0.00001,
+            n=1,
+            seed=start.SEED,
+        )
 
-            for i, choice in enumerate(response.choices):
-                cleaned_response = choice.message.content
-                classification = classify.create_binary_classification_from_response(
-                    cleaned_response
-                )
+        cleaned_response = response.choices[0].message.content
+        classification = classify.create_binary_classification_from_response(
+            cleaned_response
+        )
 
-                response_rows.append(
-                    {
-                        "participant_id": participant_id,
-                        "study": study,
-                        "question": question,
-                        "text": text,
-                        "human_code": human_code,
-                        "response": cleaned_response,
-                        "classification": classification,
-                        "prompt": prompt_text,
-                        "model": start.MODEL,
-                        "fingerprint": response.system_fingerprint,
-                        "baseline_prompt_id": baseline_prompt_id,
-                        "response_number": i + 1,
-                        "loop_num": loop_num,
-                        "timestamp": timestamp,
-                    }
-                )
+        response_rows.append(
+            {
+                "participant_id": participant_id,
+                "study": study,
+                "question": question,
+                "text": text,
+                "human_code": human_code,
+                "response": cleaned_response,
+                "classification": classification,
+                "prompt": prompt_text,
+                "model": start.MODEL,
+                "fingerprint": response.system_fingerprint,
+                "baseline_prompt_id": baseline_prompt_id,
+                "timestamp": timestamp,
+            }
+        )
 
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
-
 # ------------------ CREATE RESULTS FILE ------------------
 if not os.path.exists(EXPORT_RESULTS_PATH):
     wb = Workbook()
@@ -128,11 +122,8 @@ for bp_id in long_df.baseline_prompt_id.unique():
         valid["human_code"], valid["classification"]
     )
 
-    # Loop 1, Response 1 subset
-    subset = full_df[(full_df.response_number == 1) & (full_df.loop_num == 1)]
-    subset_valid = subset.dropna(subset=["human_code", "classification"])
-    y_true = subset_valid["human_code"]
-    y_pred = subset_valid["classification"]
+    y_true = valid["human_code"]
+    y_pred = valid["classification"]
     _, acc_se = metric_standard_errors.bootstrap_accuracy(y_true, y_pred, 1000, 12)
     _, prec_se = metric_standard_errors.bootstrap_precision(y_true, y_pred, 1000, 12)
     _, rec_se = metric_standard_errors.bootstrap_recall(y_true, y_pred, 1000, 12)

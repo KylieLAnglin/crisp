@@ -13,17 +13,17 @@ print("Current working directory:", os.getcwd())
 # ------------------ Define Scripts ------------------
 script_paths = [
     # 1. Baseline Prompt
-    "1_baseline_prompt/00_baseline_prep.py",
-    "1_baseline_prompt/01_baseline_train.py",
-    "1_baseline_prompt/02_baseline_dev.py",
-    # 2. Automatic Prompt Engineering
-    "2_APE/01_train_APEs.py",
-    "2_APE/02_APE_dev.py",
+    # "1_baseline_prompt/00_baseline_prep.py",
+    # "1_baseline_prompt/01_baseline_train.py",
+    # "1_baseline_prompt/02_baseline_dev.py",
+    # # 2. Automatic Prompt Engineering
+    # "2_APE/01_train_APEs.py",
+    # "2_APE/02_APE_dev.py",
     # 3. Persona
-    "3_persona/01_train_persona.py",
-    "3_persona/02_persona_dev.py",
+    # "3_persona/01_train_persona.py",
+    # "3_persona/02_persona_dev.py",
     # 4. Chain of Thought - Zero
-    "4_chain_of_thought/01_cot_zero_dev.py",
+    "4_zero_shot_cot/01_cot_zero_dev.py",
 ]
 
 # ------------------ Run Scripts ------------------

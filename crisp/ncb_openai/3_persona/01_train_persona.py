@@ -10,11 +10,12 @@ from openpyxl import Workbook, load_workbook
 from crisp.library import start, secrets
 from crisp.library import classify, format_prompts, metric_standard_errors
 
+SAMPLE = False
 # ------------------ CONSTANTS ------------------
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 MODEL = start.MODEL
 SEED = start.SEED
-NUM_RESPONSES = 5
+NUM_RESPONSES = 1
 TEMPERATURE = 0.00001
 
 BASELINE_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_dev.xlsx"
@@ -35,11 +36,14 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 df = pd.read_excel(TEXT_DATA_PATH)
 df = df[df.split_group == "train"]
 df = df[df.text.notna() & df.human_code.notna()]
-
+if SAMPLE:
+    df = df.sample(5)
 baseline_results = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
 top_prompt = baseline_results.loc[baseline_results["F1"].idxmax(), "Prompt"]
 bottom_prompt = baseline_results.loc[baseline_results["F1"].idxmin(), "Prompt"]
 
+top_prompt = top_prompt.replace("Text:", "")
+bottom_prompt = bottom_prompt.replace("Text:", "")
 # ------------------ CREATE COMBOS ------------------
 combos = []
 for persona in PERSONAS:
@@ -65,52 +69,49 @@ for row in combo_df.itertuples():
 
 # ------------------ GENERATE RESPONSES ------------------
 response_rows = []
-for loop_num in [1, 2]:
-    for combo_id, prompt in formatted_prompts.items():
-        for text, participant_id, study, question, human_code in tqdm(
-            zip(df.text, df.participant_id, df.study, df.question, df.human_code),
-            total=len(df),
-            desc=f"Prompt: {combo_id} (Loop {loop_num})",
-        ):
-            timestamp = datetime.now().isoformat()
-            messages = prompt + [{"role": "user", "content": text}]
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                temperature=TEMPERATURE,
-                n=NUM_RESPONSES,
-                seed=SEED,
-            )
+for combo_id, prompt in formatted_prompts.items():
+    for text, participant_id, study, question, human_code in tqdm(
+        zip(df.text, df.participant_id, df.study, df.question, df.human_code),
+        total=len(df),
+        desc=f"Prompt: {combo_id}",
+    ):
+        timestamp = datetime.now().isoformat()
+        messages = prompt + [{"role": "user", "content": text}]
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            n=1,
+            seed=SEED,
+        )
 
-            for i, choice in enumerate(response.choices):
-                cleaned_response = choice.message.content
-                classification = classify.create_binary_classification_from_response(
-                    cleaned_response
-                )
-                response_rows.append(
-                    {
-                        "participant_id": participant_id,
-                        "study": study,
-                        "question": question,
-                        "text": text,
-                        "human_code": human_code,
-                        "response": cleaned_response,
-                        "classification": classification,
-                        "prompt": prompt[0]["content"],
-                        "combo_id": combo_id,
-                        "persona": combo_df.loc[
-                            combo_df.combo_id == combo_id, "persona"
-                        ].iloc[0],
-                        "category": combo_df.loc[
-                            combo_df.combo_id == combo_id, "category"
-                        ].iloc[0],
-                        "response_number": i + 1,
-                        "loop_num": loop_num,
-                        "timestamp": timestamp,
-                        "model": MODEL,
-                        "fingerprint": response.system_fingerprint,
-                    }
-                )
+        for i, choice in enumerate(response.choices):
+            cleaned_response = choice.message.content
+            classification = classify.create_binary_classification_from_response(
+                cleaned_response
+            )
+            response_rows.append(
+                {
+                    "participant_id": participant_id,
+                    "study": study,
+                    "question": question,
+                    "text": text,
+                    "human_code": human_code,
+                    "response": cleaned_response,
+                    "classification": classification,
+                    "prompt": prompt[0]["content"],
+                    "combo_id": combo_id,
+                    "persona": combo_df.loc[
+                        combo_df.combo_id == combo_id, "persona"
+                    ].iloc[0],
+                    "category": combo_df.loc[
+                        combo_df.combo_id == combo_id, "category"
+                    ].iloc[0],
+                    "timestamp": timestamp,
+                    "model": MODEL,
+                    "fingerprint": response.system_fingerprint,
+                }
+            )
 
 # ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
@@ -144,11 +145,10 @@ for col, header in enumerate(headers, 1):
     ws.cell(row=1, column=col, value=header)
 
 # Filter: loop 1, response 1 only
-FILTER = (long_df.response_number == 1) & (long_df.loop_num == 1)
 
 row = 2
 for combo in long_df.combo_id.unique():
-    sub_df = long_df[(long_df.combo_id == combo) & FILTER]
+    sub_df = long_df[(long_df.combo_id == combo)]
     valid = sub_df.dropna(subset=["human_code", "classification"])
     y_true = valid["human_code"]
     y_pred = valid["classification"]

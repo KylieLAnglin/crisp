@@ -10,11 +10,12 @@ import os
 from crisp.library import start, secrets
 from crisp.library import format_prompts, classify, metric_standard_errors
 
+SAMPLE = False
 # ------------------ CONSTANTS ------------------
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 MODEL = start.MODEL
 GENERATION_TEMPERATURE = 0.00001
-NUM_RESPONSES = 5
+NUM_RESPONSES = 1  # Only one response per input
 SEED = start.SEED
 
 PROMPT_PATH_TOP = start.RESULTS_DIR + "ncb_ape_top_results.csv"
@@ -27,7 +28,10 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # ------------------ LOAD PROMPTS ------------------
 prompt_df1 = pd.read_csv(PROMPT_PATH_TOP)
 prompt_df1["prompt_id"] = (
-    "top" + prompt_df1.generation.astype(str) + "_" + prompt_df1.variant_id.astype(str)
+    "top"
+    + prompt_df1.generation.astype(int).astype(str)
+    + "_"
+    + prompt_df1.variant_id.astype(int).astype(str)
 )
 prompt_df1 = prompt_df1.set_index("prompt_id")
 max_f1_index1 = prompt_df1["f1_score"].idxmax()
@@ -36,75 +40,71 @@ prompt_df1 = prompt_df1.loc[[max_f1_index1]]
 prompt_df2 = pd.read_csv(PROMPT_PATH_BOTTOM)
 prompt_df2["prompt_id"] = (
     "bottom"
-    + prompt_df2.generation.astype(str)
+    + prompt_df2.generation.astype(int).astype(str)
     + "_"
-    + prompt_df2.variant_id.astype(str)
+    + prompt_df2.variant_id.astype(int).astype(str)
 )
 prompt_df2 = prompt_df2.set_index("prompt_id")
 max_f1_index2 = prompt_df2["f1_score"].idxmax()
 prompt_df2 = prompt_df2.loc[[max_f1_index2]]
 
 prompt_df = pd.concat([prompt_df1, prompt_df2])
-prompt_df["prompt"] = prompt_df["prompt"]
+prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text:", "")
 prompt_df["combo_id"] = prompt_df.index
 
 # ------------------ FORMAT PROMPTS ------------------
-formatted_prompts = []
-prompt_mapping = {}
-for combo_id, prompt_text in zip(prompt_df.combo_id, prompt_df.prompt):
-    message = format_prompts.format_system_message(prompt_text)
-    formatted_prompts.append([message])
-    prompt_mapping[prompt_text] = combo_id
+formatted_prompts = {
+    row.combo_id: [format_prompts.format_system_message(row.prompt)]
+    for row in prompt_df.itertuples()
+}
 
 # ------------------ LOAD TEXT DATA ------------------
 df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
 df = df[df.split_group == "dev"]
-
+if SAMPLE:
+    df = df.sample(5)
 # ------------------ COLLECT RESPONSES ------------------
 response_rows = []
-for loop_num in [1, 2]:
-    for prompt in formatted_prompts:
-        prompt_text = prompt[0]["content"]
-        combo_id = prompt_mapping[prompt_text]
+for combo_id in prompt_df.combo_id:
+    prompt = formatted_prompts[combo_id]
+    prompt_text = prompt[0]["content"]
 
-        for text, participant_id, study, question, human_code in tqdm(
-            zip(df.text, df.participant_id, df.study, df.question, df.human_code),
-            total=len(df),
-        ):
-            timestamp = datetime.now().isoformat()
-            messages = prompt + [{"role": "user", "content": text}]
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                temperature=GENERATION_TEMPERATURE,
-                n=NUM_RESPONSES,
-                seed=SEED,
-            )
+    for text, participant_id, study, question, human_code in tqdm(
+        zip(df.text, df.participant_id, df.study, df.question, df.human_code),
+        total=len(df),
+        desc=f"Combo {combo_id}",
+    ):
+        timestamp = datetime.now().isoformat()
+        messages = prompt + [{"role": "user", "content": text}]
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=GENERATION_TEMPERATURE,
+            n=1,
+            seed=SEED,
+        )
 
-            for i, choice in enumerate(response.choices):
-                cleaned_response = choice.message.content
-                classification = classify.create_binary_classification_from_response(
-                    cleaned_response
-                )
+        cleaned_response = response.choices[0].message.content
+        classification = classify.create_binary_classification_from_response(
+            cleaned_response
+        )
 
-                response_rows.append(
-                    {
-                        "participant_id": participant_id,
-                        "study": study,
-                        "question": question,
-                        "text": text,
-                        "human_code": human_code,
-                        "response": cleaned_response,
-                        "classification": classification,
-                        "prompt": prompt_text,
-                        "model": MODEL,
-                        "fingerprint": response.system_fingerprint,
-                        "combo_id": combo_id,
-                        "response_number": i + 1,
-                        "loop_num": loop_num,
-                        "timestamp": timestamp,
-                    }
-                )
+        response_rows.append(
+            {
+                "participant_id": participant_id,
+                "study": study,
+                "question": question,
+                "text": text,
+                "human_code": human_code,
+                "response": cleaned_response,
+                "classification": classification,
+                "prompt": prompt_text,
+                "model": MODEL,
+                "fingerprint": response.system_fingerprint,
+                "combo_id": combo_id,
+                "timestamp": timestamp,
+            }
+        )
 
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(RESPONSE_PATH, index=False)
@@ -136,11 +136,7 @@ for col, header in enumerate(headers, 1):
 
 row = 2
 for combo in long_df.combo_id.unique():
-    combo_df = long_df[
-        (long_df.combo_id == combo)
-        & (long_df.response_number == 1)
-        & (long_df.loop_num == 1)
-    ]
+    combo_df = long_df[long_df.combo_id == combo]
     valid_indices = combo_df.dropna(subset=["human_code", "classification"]).index
     human_codes = combo_df.loc[valid_indices, "human_code"]
     classifications = combo_df.loc[valid_indices, "classification"]
