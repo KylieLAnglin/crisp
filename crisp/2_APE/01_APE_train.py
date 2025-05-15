@@ -25,8 +25,8 @@ META_INSTRUCTIONS2 = "\nOutput only the new instruction."
 
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
-BASELINE_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_results_dev.xlsx"
+IMPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
 )
 
 
@@ -47,7 +47,7 @@ df = df[df.split_group == "train"].rename(columns={"human_code": "label"})
 df = df[df.text.notna() & df.label.notna()]
 if SAMPLE:
     df = df.sample(5, random_state=start.SEED)
-prompt_df = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
+prompt_df = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
 
 
 # ------------------ FUNCTIONS ------------------

@@ -21,10 +21,10 @@ DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
 EXPORT_RESPONSE_PATH = (
     start.DATA_DIR
-    + f"responses_train/{PLATFORM}_{CONCEPT}_baseline_responses_train.xlsx"
+    + f"responses_train/{PLATFORM}_{CONCEPT}_baseline_zero_responses_train.xlsx"
 )
 EXPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
 )
 
 

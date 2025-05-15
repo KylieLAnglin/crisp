@@ -2,7 +2,7 @@
 USER = "Kylie"
 PLATFORM = "openai"
 CONCEPT = "ncb"
-SAMPLE = True
+SAMPLE = False
 # ------------------ PATHS ------------------
 
 

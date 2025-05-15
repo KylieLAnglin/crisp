@@ -1,4 +1,3 @@
-# 02_baseline_dev.py
 # %%
 import pandas as pd
 from openai import OpenAI
@@ -13,23 +12,30 @@ from crisp.library import format_prompts, classify, metric_standard_errors
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
 MODEL = start.MODEL
-print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in dev set")
+print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in train set")
 SAMPLE = start.SAMPLE
+
 # ------------------ CONSTANTS ------------------
 IMPORT_PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
 IMPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
 )
 
 EXPORT_RESPONSE_PATH = (
     start.DATA_DIR
-    + f"responses_dev/{PLATFORM}_{CONCEPT}_baseline_zero_responses_dev.xlsx"
+    + f"responses_dev/{PLATFORM}_{CONCEPT}_persona_zero_responses_train.xlsx"
 )
 EXPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_persona_zero_results_train.xlsx"
 )
+PERSONAS = [
+    "You are a brilliant psychologist. ",
+    "You are an excellent therapist. ",
+    "You are a very smart mental health researcher. ",
+]
+
 
 # ------------------ LOAD DATA ------------------
 df = pd.read_excel(DATA_PATH)
@@ -45,7 +51,30 @@ bbp_id = training_results.loc[training_results["F1"].idxmin(), "Baseline Prompt 
 prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="baseline")
 prompt_df = prompt_df[prompt_df.baseline_prompt_id.isin([tbp_id, bbp_id])]
 prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text: ", "")
-# %%
+
+top_prompt = prompt_df.loc[prompt_df.baseline_prompt_id == tbp_id, "prompt"].values[0]
+bottom_prompt = prompt_df.loc[prompt_df.baseline_prompt_id == bbp_id, "prompt"].values[
+    0
+]
+top_prompt = top_prompt.replace("Text: ", "")
+bottom_prompt = bottom_prompt.replace("Text: ", "")
+# ------------------ CREATE COMBOS ------------------
+combos = []
+for persona in PERSONAS:
+    for category, base_prompt in [("top", top_prompt), ("bottom", bottom_prompt)]:
+        prompt_text = persona + base_prompt
+        combo_id = f"{category}_{persona.split()[2].lower()}"
+        combos.append(
+            {
+                "combo_id": combo_id,
+                "prompt": prompt_text,
+                "category": category,
+                "persona": persona,
+            }
+        )
+
+combo_df = pd.DataFrame(combos)
+
 # ------------------ FORMAT PROMPTS ------------------
 # TODO: does this need to be edited for llama? If so,
 # add an argument for platform
@@ -53,16 +82,14 @@ formatted_prompts = []
 for prompt_text in prompt_df["prompt"]:
     message = format_prompts.format_system_message(prompt_text)
     formatted_prompts.append([message])
-# %%
-# ------------------ COLLECT RESPONSES ------------------# ------------------ COLLECT RESPONSES ------------------
+# ------------------ GENERATE RESPONSES ------------------
 response_rows = []
-for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_prompts):
+for combo_id, prompt in formatted_prompts.items():
     prompt_text = prompt[0]["content"]  # TODO: is this the same format for llama?
-
     for text, participant_id, study, question, human_code in tqdm(
         zip(df.text, df.participant_id, df.study, df.question, df.human_code),
         total=len(df),
-        desc=f"Prompt ID: {baseline_prompt_id}",
+        desc=f"Prompt: {combo_id}",
     ):
         timestamp = datetime.now().isoformat()
         cleaned_response, system_fingerprint = classify.format_message_and_get_response(
@@ -84,29 +111,34 @@ for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_pr
                 "human_code": human_code,
                 "response": cleaned_response,
                 "classification": classification,
-                "prompt": prompt_text,
-                "model": start.MODEL,
-                "fingerprint": system_fingerprint,
-                "baseline_prompt_id": baseline_prompt_id,
+                "prompt": prompt[0]["content"],
+                "model": MODEL,
+                "prompt_id": combo_id,
+                "category": combo_df.loc[
+                    combo_df.combo_id == combo_id, "category"
+                ].iloc[0],
                 "timestamp": timestamp,
+                "fingerprint": system_fingerprint,
             }
         )
 
+# ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
-# ------------------ CREATE RESULTS FILE ------------------
+
+# ------------------ EVALUATE PROMPTS ------------------
 if not os.path.exists(EXPORT_RESULTS_PATH):
     wb = Workbook()
     wb.save(EXPORT_RESULTS_PATH)
 
-# ------------------ WRITE METRICS ------------------
 wb = load_workbook(EXPORT_RESULTS_PATH)
 if "results" in wb.sheetnames:
     del wb["results"]
 ws = wb.create_sheet("results")
 
 headers = [
-    "Baseline Prompt ID",
+    "Combo ID",
+    "Baseline Category",
     "Accuracy",
     "Precision",
     "Recall",
@@ -120,27 +152,24 @@ headers = [
 for col, header in enumerate(headers, 1):
     ws.cell(row=1, column=col, value=header)
 
+# Filter: loop 1, response 1 only
+
 row = 2
-for bp_id in long_df.baseline_prompt_id.unique():
-    combo_df = long_df[long_df.baseline_prompt_id == bp_id]
-    full_df = combo_df.copy()
-
-    # Full metrics
-    valid = full_df.dropna(subset=["human_code", "classification"])
-    accuracy, precision, recall, f1 = classify.print_and_save_metrics(
-        valid["human_code"], valid["classification"]
-    )
-
+for combo in long_df.combo_id.unique():
+    sub_df = long_df[(long_df.combo_id == combo)]
+    valid = sub_df.dropna(subset=["human_code", "classification"])
     y_true = valid["human_code"]
     y_pred = valid["classification"]
+
+    accuracy, precision, recall, f1 = classify.print_and_save_metrics(y_true, y_pred)
     _, acc_se = metric_standard_errors.bootstrap_accuracy(y_true, y_pred, 1000, 12)
     _, prec_se = metric_standard_errors.bootstrap_precision(y_true, y_pred, 1000, 12)
     _, rec_se = metric_standard_errors.bootstrap_recall(y_true, y_pred, 1000, 12)
     _, f1_se = metric_standard_errors.bootstrap_f1(y_true, y_pred, 1000, 12)
 
-    prompt_text = combo_df["prompt"].iloc[0]
     results = [
-        bp_id,
+        combo,
+        sub_df["category"].iloc[0],
         accuracy,
         precision,
         recall,
@@ -149,12 +178,12 @@ for bp_id in long_df.baseline_prompt_id.unique():
         prec_se,
         rec_se,
         f1_se,
-        prompt_text,
+        sub_df["prompt"].iloc[0],
     ]
 
     for col, val in enumerate(results, 1):
         ws.cell(
-            row=row, column=col, value=round(val, 3) if isinstance(val, float) else val
+            row=row, column=col, value=round(val, 2) if isinstance(val, float) else val
         )
     row += 1
 

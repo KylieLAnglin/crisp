@@ -10,22 +10,26 @@ import os
 from crisp.library import start, secrets
 from crisp.library import format_prompts, classify, metric_standard_errors
 
-SAMPLE = False
-# ------------------ CONSTANTS ------------------
-OPENAI_API_KEY = secrets.OPENAI_API_KEY
+CONCEPT = start.CONCEPT
+PLATFORM = start.PLATFORM
 MODEL = start.MODEL
-SEED = start.SEED
-TEMPERATURE = 0.00001
-NUM_RESPONSES = 1  # Only one response per example
+print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in dev set")
+SAMPLE = start.SAMPLE
+# ------------------ CONSTANTS ------------------
+IMPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_persona_zero_results_train.xlsx"
+)
 
-RESULTS_TRAIN_PATH = start.MAIN_DIR + "results/ncb_persona_results_train.xlsx"
-RESPONSE_PATH = start.DATA_DIR + "responses_dev/ncb_persona_responses_dev.xlsx"
-RESULTS_PATH = start.MAIN_DIR + "results/ncb_persona_results_dev.xlsx"
-
-client = OpenAI(api_key=OPENAI_API_KEY)
+EXPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_persona_zero_results_dev.xlsx"
+)
+EXPORT_RESPONSE_PATH = (
+    start.DATA_DIR
+    + f"responses_dev/{PLATFORM}_{CONCEPT}_persona_zero_responses_dev.xlsx"
+)
 
 # ------------------ LOAD BEST PERSONAS ------------------
-results_df = pd.read_excel(RESULTS_TRAIN_PATH, sheet_name="results")
+results_df = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
 top_combo = (
     results_df[results_df["Baseline Category"] == "top"]
     .sort_values(by="F1", ascending=False)
