@@ -56,3 +56,23 @@ def print_and_save_metrics(human_codes, classifications):
     print(f"Recall: {recall}")
     print(f"F1: {f1}")
     return accuracy, precision, recall, f1
+
+
+def generate_prompt_variants(
+    model_provider, base_prompt, metaprompt1, metaprompt2, num_variants
+):
+    variants = []
+    for _ in range(num_variants):
+        meta_instructions = metaprompt1 + base_prompt + metaprompt2
+        if model_provider == "openai":
+            response = client.chat.completions.create(
+                model=start.MODEL,
+                messages=[{"role": "system", "content": meta_instructions}],
+                temperature=1,
+            )
+            new_prompt = response.choices[0].message.content.strip()
+        elif model_provider == "llama":
+            # Placeholder - fill in here
+            new_prompt = "llama_fake_response"
+        variants.append(new_prompt)
+    return variants
