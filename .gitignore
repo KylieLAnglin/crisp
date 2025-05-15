@@ -21,7 +21,7 @@
 *.dominokeep
 
 # Other
-venv
+.venv
 *.xml
 *.iml
 crisp/library/secrets.py
