@@ -1,4 +1,4 @@
-# A2_baseline_dev.py
+# 02_baseline_dev.py
 # %%
 import pandas as pd
 from openai import OpenAI
