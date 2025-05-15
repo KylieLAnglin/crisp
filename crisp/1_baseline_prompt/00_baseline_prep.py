@@ -4,15 +4,18 @@ import numpy as np
 from crisp.library import start
 
 np.random.seed(123)
+
+CONCEPT = start.CONCEPT
+print(CONCEPT)
 # ------------------ CONSTANTS ------------------
-PROMPT_FILE = "ncb_baseline_variants"
-source_path = start.DATA_DIR + f"prompts/{PROMPT_FILE}.xlsx"
-output_sheet = "variants"
+
+PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
+DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
 # ------------------ LOAD AND COMBINE PROMPTS ------------------
-part1_variants = pd.read_excel(source_path, sheet_name="part1", index_col="part_num")
-part2_variants = pd.read_excel(source_path, sheet_name="part2", index_col="part_num")
-opt_variants = pd.read_excel(source_path, sheet_name="opt", index_col="opt_num")
+part1_variants = pd.read_excel(PROMPT_PATH, sheet_name="part1", index_col="part_num")
+part2_variants = pd.read_excel(PROMPT_PATH, sheet_name="part2", index_col="part_num")
+opt_variants = pd.read_excel(PROMPT_PATH, sheet_name="opt", index_col="opt_num")
 
 sample_prompts = []
 for sample_num in range(1, 51):
@@ -47,9 +50,9 @@ prompt_df = prompt_df[["baseline_prompt_id", "prompt"]]
 # %%
 
 with pd.ExcelWriter(
-    source_path, mode="a", engine="openpyxl", if_sheet_exists="replace"
+    PROMPT_PATH, mode="a", engine="openpyxl", if_sheet_exists="replace"
 ) as writer:
-    prompt_df.to_excel(writer, sheet_name=output_sheet, index=False)
+    prompt_df.to_excel(writer, sheet_name="baseline", index=False)
 
 
 # %%
