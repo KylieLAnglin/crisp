@@ -10,32 +10,43 @@ import os
 from crisp.library import start, secrets
 from crisp.library import format_prompts, classify, metric_standard_errors
 
+CONCEPT = start.CONCEPT
+PLATFORM = start.PLATFORM
+MODEL = start.MODEL
+print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in dev set")
 # ------------------ CONSTANTS ------------------
-IMPORT_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_train.xlsx"
-IMPORT_PROMPT_PATH = start.DATA_DIR + "prompts/ncb_baseline_variants.xlsx"
+IMPORT_PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
+DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
-EXPORT_RESPONSE_PATH = start.DATA_DIR + "responses_dev/ncb_variants_responses_dev.xlsx"
-EXPORT_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_dev.xlsx"
+IMPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_results_train.xlsx"
+)
 
-OPENAI_API_KEY = secrets.OPENAI_API_KEY
-client = OpenAI(api_key=OPENAI_API_KEY)
+EXPORT_RESPONSE_PATH = (
+    start.DATA_DIR + f"responses_dev/{PLATFORM}_{CONCEPT}_baseline_responses_dev.xlsx"
+)
+EXPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_results_dev.xlsx"
+)
 
-SAMPLE = False
 # ------------------ LOAD DATA ------------------
-df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
-df = df[df.split_group == "dev"]
-if SAMPLE:
-    df = df.sample(5)
+df = pd.read_excel(DATA_PATH)
+df = df[df.split_group == "train"]
+if start.SAMPLE:
+    df = df.sample(5, random_state=start.SEED)
+
 # ------------------ LOAD PROMPTS ------------------
 training_results = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
 tbp_id = training_results.loc[training_results["F1"].idxmax(), "Baseline Prompt ID"]
 bbp_id = training_results.loc[training_results["F1"].idxmin(), "Baseline Prompt ID"]
 
-prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="variants")
+prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="baseline")
 prompt_df = prompt_df[prompt_df.baseline_prompt_id.isin([tbp_id, bbp_id])]
 prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text: ", "")
 # %%
 # ------------------ FORMAT PROMPTS ------------------
+# TODO: does this need to be edited for llama? If so,
+# add an argument for platform
 formatted_prompts = []
 for prompt_text in prompt_df["prompt"]:
     message = format_prompts.format_system_message(prompt_text)
@@ -44,7 +55,7 @@ for prompt_text in prompt_df["prompt"]:
 # ------------------ COLLECT RESPONSES ------------------# ------------------ COLLECT RESPONSES ------------------
 response_rows = []
 for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_prompts):
-    prompt_text = prompt[0]["content"]
+    prompt_text = prompt[0]["content"]  # TODO: is this the same format for llama?
 
     for text, participant_id, study, question, human_code in tqdm(
         zip(df.text, df.participant_id, df.study, df.question, df.human_code),
@@ -52,16 +63,12 @@ for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_pr
         desc=f"Prompt ID: {baseline_prompt_id}",
     ):
         timestamp = datetime.now().isoformat()
-        messages = prompt + [{"role": "user", "content": text}]
-        response = client.chat.completions.create(
-            model=start.MODEL,
-            messages=messages,
-            temperature=0.00001,
-            n=1,
-            seed=start.SEED,
+        cleaned_response, system_fingerprint = classify.format_message_and_get_response(
+            model_provider=start.PLATFORM,
+            prompt=prompt,
+            text_to_classify=text,
+            temperature=0.0001,
         )
-
-        cleaned_response = response.choices[0].message.content
         classification = classify.create_binary_classification_from_response(
             cleaned_response
         )
@@ -77,7 +84,7 @@ for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_pr
                 "classification": classification,
                 "prompt": prompt_text,
                 "model": start.MODEL,
-                "fingerprint": response.system_fingerprint,
+                "fingerprint": system_fingerprint,
                 "baseline_prompt_id": baseline_prompt_id,
                 "timestamp": timestamp,
             }

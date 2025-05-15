@@ -13,17 +13,18 @@ from crisp.library import format_prompts, classify
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
 MODEL = start.MODEL
-print(f"Running {CONCEPT} on {PLATFORM} with {MODEL}")
+print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in train set")
 # ------------------ CONSTANTS ------------------
 
 IMPORT_PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
 EXPORT_RESPONSE_PATH = (
-    start.DATA_DIR + f"responses_train/{PLATFORM}_{CONCEPT}_responses_train.xlsx"
+    start.DATA_DIR
+    + f"responses_train/{PLATFORM}_{CONCEPT}_baseline_responses_train.xlsx"
 )
 EXPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_results_train.xlsx"
 )
 
 
