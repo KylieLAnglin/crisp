@@ -7,7 +7,7 @@ import pandas as pd
 from openai import OpenAI
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from crisp.library import secrets
+from crisp.library import secrets, start
 
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 
@@ -15,17 +15,25 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 def format_message_and_get_response(
-    prompt, text_to_classify, model="gpt-4o", temperature=0.00
+    model_provider, prompt, text_to_classify, temperature=0.0001
 ):
-    messages = prompt + [{"role": "user", "content": text_to_classify}]
+    if model_provider == "openai":
+        messages = prompt + [{"role": "user", "content": text_to_classify}]
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-    )
-    cleaned_response = response.choices[0].message.content
-    return cleaned_response
+        response = client.chat.completions.create(
+            model=start.MODEL,
+            messages=messages,
+            temperature=temperature,
+            n=1,
+            seed=start.SEED,
+        )
+        cleaned_response = response.choices[0].message.content
+        return cleaned_response, response.system_fingerprint
+    elif model_provider == "llama":
+        # Placeholder - fill in here
+        return "llama_fake_response", "llama_fingerprint"
+    else:
+        raise ValueError(f"Unsupported model provider: {model_provider}")
 
 
 def create_binary_classification_from_response(response):

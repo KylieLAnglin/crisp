@@ -10,29 +10,35 @@ import os
 from crisp.library import start, secrets
 from crisp.library import format_prompts, classify
 
+CONCEPT = start.CONCEPT
+PLATFORM = start.PLATFORM
+MODEL = start.MODEL
+print(f"Running {CONCEPT} on {PLATFORM} with {MODEL}")
 # ------------------ CONSTANTS ------------------
 
-IMPORT_PROMPT_PATH = start.DATA_DIR + "prompts/ncb_baseline_variants.xlsx"
+IMPORT_PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
+DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
+
 EXPORT_RESPONSE_PATH = (
-    start.DATA_DIR + "responses_train/ncb_variants_responses_train.xlsx"
+    start.DATA_DIR + f"responses_train/{PLATFORM}_{CONCEPT}_responses_train.xlsx"
 )
-EXPORT_RESULTS_PATH = start.MAIN_DIR + "results/ncb_variants_results_train.xlsx"
+EXPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_results_train.xlsx"
+)
 
-OPENAI_API_KEY = secrets.OPENAI_API_KEY
-client = OpenAI(api_key=OPENAI_API_KEY)
-
-SAMPLE = False
 
 # ------------------ LOAD DATA ------------------
-df = pd.read_excel(start.DATA_DIR + "clean/negative_core_beliefs.xlsx")
+df = pd.read_excel(DATA_PATH)
 df = df[df.split_group == "train"]
-if SAMPLE:
+if start.SAMPLE:
     df = df.sample(5, random_state=start.SEED)
 
-prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="variants")
+prompt_df = pd.read_excel(IMPORT_PROMPT_PATH, sheet_name="baseline")
 prompt_df["baseline_prompt_id"] = prompt_df.index
 full_prompt_texts = prompt_df["prompt"].tolist()
 
+# TODO: does this need to be edited for llama? If so,
+# add an argument for platform
 formatted_prompts = []
 for prompt_text in full_prompt_texts:
     message = format_prompts.format_system_message(prompt_text)
@@ -42,7 +48,7 @@ for prompt_text in full_prompt_texts:
 # ------------------ COLLECT RESPONSES ------------------
 response_rows = []
 for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_prompts):
-    prompt_text = prompt[0]["content"]
+    prompt_text = prompt[0]["content"]  # TODO: is this the same format for llama?
 
     for text, participant_id, study, question, human_code in tqdm(
         zip(df.text, df.participant_id, df.study, df.question, df.human_code),
@@ -50,16 +56,12 @@ for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_pr
         desc=f"Prompt ID: {baseline_prompt_id}",
     ):
         timestamp = datetime.now().isoformat()
-        messages = prompt + [{"role": "user", "content": text}]
-        response = client.chat.completions.create(
-            model=start.MODEL,
-            messages=messages,
-            temperature=0.00001,
-            n=1,
-            seed=start.SEED,
+        cleaned_response, system_fingerprint = classify.format_message_and_get_response(
+            model_provider=start.PLATFORM,
+            prompt=prompt,
+            text_to_classify=text,
+            temperature=0.0001,
         )
-
-        cleaned_response = response.choices[0].message.content
         classification = classify.create_binary_classification_from_response(
             cleaned_response
         )
@@ -75,7 +77,7 @@ for baseline_prompt_id, prompt in zip(prompt_df.baseline_prompt_id, formatted_pr
                 "classification": classification,
                 "prompt": prompt_text,
                 "model": start.MODEL,
-                "fingerprint": response.system_fingerprint,
+                "fingerprint": system_fingerprint,
                 "baseline_prompt_id": baseline_prompt_id,
                 "timestamp": timestamp,
             }
