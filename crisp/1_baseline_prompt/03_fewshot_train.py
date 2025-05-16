@@ -5,6 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import random
 
 from crisp.library import start, classify
 
@@ -14,6 +15,9 @@ PLATFORM = start.PLATFORM
 MODEL = start.MODEL
 SAMPLE = start.SAMPLE
 SEED = start.SEED
+
+random.seed(SEED)
+rng = np.random.default_rng(SEED)
 
 print(f"Running few-shot setup and evaluation on {CONCEPT} with {MODEL}")
 
@@ -44,6 +48,7 @@ df_fewshot_pool = df.sample(50, random_state=SEED)
 df_eval = df.drop(df_fewshot_pool.index)
 if SAMPLE:
     df_eval = df_eval.sample(5, random_state=SEED)
+
 # ------------------ LOAD TOP AND BOTTOM PROMPTS ------------------
 results_df = pd.read_excel(RESULTS_PATH, sheet_name="results")
 top_prompt = results_df.loc[results_df["F1"].idxmax(), "prompt"]
@@ -51,24 +56,35 @@ bottom_prompt = results_df.loc[results_df["F1"].idxmin(), "prompt"]
 top_prompt = top_prompt.replace("Text:", "")
 bottom_prompt = bottom_prompt.replace("Text:", "")
 
-# ------------------ GENERATE FEWSHOT SAMPLES ------------------
-sample_examples = []
-for sample_num in range(1, 51):
-    num_examples = np.random.randint(1, 11)
-    sampled = df_fewshot_pool.sample(num_examples, random_state=sample_num)
-    examples = [
-        {"text": text, "label": label}
-        for text, label in zip(sampled["text"], sampled["human_code"])
-    ]
-    sample_examples.append(
-        {"sample_id": sample_num, "num_examples": num_examples, "examples": examples}
+# ------------------ GENERATE OR LOAD FEWSHOT SAMPLES ------------------
+if os.path.exists(FEWSHOT_EXAMPLES_PATH):
+    print(
+        f"Few-shot samples already exist at {FEWSHOT_EXAMPLES_PATH}, loading from file..."
     )
+    with open(FEWSHOT_EXAMPLES_PATH, "r") as f:
+        sample_examples = json.load(f)
+else:
+    print("Generating new few-shot samples...")
+    sample_examples = []
+    for sample_num in range(1, 51):
+        num_examples = rng.integers(1, 11)
+        sampled = df_fewshot_pool.sample(num_examples, random_state=sample_num)
+        examples = [
+            {"text": text, "label": int(label)}
+            for text, label in zip(sampled["text"], sampled["human_code"])
+        ]
+        sample_examples.append(
+            {
+                "sample_id": int(sample_num),
+                "num_examples": int(num_examples),
+                "examples": examples,
+            }
+        )
 
-# ------------------ SAVE SAMPLE DEFINITIONS ------------------
-os.makedirs(os.path.dirname(FEWSHOT_EXAMPLES_PATH), exist_ok=True)
-with open(FEWSHOT_EXAMPLES_PATH, "w") as f:
-    json.dump(sample_examples, f, indent=2)
-print(f"Saved {len(sample_examples)} few-shot samples to {FEWSHOT_EXAMPLES_PATH}")
+    os.makedirs(os.path.dirname(FEWSHOT_EXAMPLES_PATH), exist_ok=True)
+    with open(FEWSHOT_EXAMPLES_PATH, "w") as f:
+        json.dump(sample_examples, f, indent=2)
+    print(f"Saved {len(sample_examples)} few-shot samples to {FEWSHOT_EXAMPLES_PATH}")
 
 # ------------------ EVALUATE SAMPLES ------------------
 response_rows = []
