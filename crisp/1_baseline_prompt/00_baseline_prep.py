@@ -1,53 +1,40 @@
+# A0_baseline_prep.py
 # %%
 import pandas as pd
 import numpy as np
+
 from crisp.library import start
 
-np.random.seed(123)
+# ------------------ SETUP ------------------
+np.random.seed(start.SEED)
 
 CONCEPT = start.CONCEPT
-print(CONCEPT)
-# ------------------ CONSTANTS ------------------
-
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
-# ------------------ LOAD AND COMBINE PROMPTS ------------------
-part1_variants = pd.read_excel(PROMPT_PATH, sheet_name="part1", index_col="part_num")
-part2_variants = pd.read_excel(PROMPT_PATH, sheet_name="part2", index_col="part_num")
-opt_variants = pd.read_excel(PROMPT_PATH, sheet_name="opt", index_col="opt_num")
 
+# ------------------ LOAD VARIANTS ------------------
+part1_df = pd.read_excel(PROMPT_PATH, sheet_name="part1", index_col="part_num")
+part2_df = pd.read_excel(PROMPT_PATH, sheet_name="part2", index_col="part_num")
+opt_df = pd.read_excel(PROMPT_PATH, sheet_name="opt", index_col="opt_num")
+
+# ------------------ GENERATE 50 RANDOM COMBOS ------------------
 sample_prompts = []
 for sample_num in range(1, 51):
-    # random sample from part 1
-    part1_sample = part1_variants.sample(1, random_state=sample_num).iloc[0].iloc[0]
-    # random sample number of additions - 0 through 3
-    num_additions = np.random.randint(0, 4)
-    # if num_additions > 0, random sample from opt without replacement
-    if num_additions > 0:
-        opt_sample = opt_variants.sample(num_additions, random_state=sample_num).iloc[
-            :, 0
-        ]
-        opt_text = ""
-        for opt in opt_sample:
-            opt_text += f"{opt} "
-    else:
-        opt_text = ""
-    # random sample from part 2
-    part2_sample = part2_variants.sample(1, random_state=sample_num).iloc[0].iloc[0]
-    # combine samples, add " Text: " to end
-    sample_prompt = f"{part1_sample} {opt_text}{part2_sample} "
-    print(sample_prompt)
-    sample_prompts.append(sample_prompt)
+    part1 = part1_df.sample(1, random_state=sample_num).iloc[0, 0]
+    part2 = part2_df.sample(1, random_state=sample_num).iloc[0, 0]
 
-# %%
-prompt_df = pd.DataFrame(sample_prompts, columns=["prompt"])
-prompt_df["baseline_prompt_id"] = prompt_df.index + 1
+    num_opts = np.random.randint(0, 4)
+    opt_text = ""
+    if num_opts > 0:
+        opts = opt_df.sample(num_opts, random_state=sample_num).iloc[:, 0]
+        opt_text = " ".join(opts.tolist()) + " "
 
-prompt_df = prompt_df[["baseline_prompt_id", "prompt"]]
+    full_prompt = f"{part1} {opt_text}{part2}".strip()
+    sample_prompts.append(full_prompt)
 
-
-# %%
+# ------------------ EXPORT TO EXCEL ------------------
+prompt_df = pd.DataFrame({"baseline_prompt_id": range(1, 51), "prompt": sample_prompts})
 
 with pd.ExcelWriter(
     PROMPT_PATH, mode="a", engine="openpyxl", if_sheet_exists="replace"

@@ -8,6 +8,7 @@ SAMPLE = False
 
 if USER == "Kylie":
     # Kylie
+    CODE_DIR = "/Users/kla21002/crisp/crisp/"
     ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/"
 
 MAIN_DIR = ONEDRIVE + "crisp/"
