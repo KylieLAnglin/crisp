@@ -7,14 +7,11 @@ from tqdm import tqdm
 
 from crisp.library import start, classify
 
-#####
-# BROKEN!
-#####
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
 MODEL = start.MODEL
-SAMPLE = start.SAMPLE
+SAMPLE = True
 SEED = start.SEED
 
 print(f"Running few-shot evaluation on {CONCEPT} with {MODEL} in dev set")
@@ -48,47 +45,69 @@ baseline_df = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
 top_prompt = baseline_df.loc[baseline_df["F1"].idxmax(), "prompt"]
 bottom_prompt = baseline_df.loc[baseline_df["F1"].idxmin(), "prompt"]
 
-# ------------------ EVALUATE ------------------
-response_rows = []
-for sample in tqdm(fewshot_samples, desc="Evaluating Few-shot Configurations"):
-    fewshot_examples = sample["examples"]
-    num_examples = sample["num_examples"]
-    sample_id = sample["sample_id"]
+# ------------------ LOAD TRAINING FEWSHOT RESULTS ------------------
+train_fewshot_results_path = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_fewshot_results_train.xlsx"
+)
+train_df = pd.read_excel(train_fewshot_results_path, sheet_name="results")
 
-    # Format few-shot examples
-    intro = "Here are some examples:\n"
-    examples_text = "\n".join(
+# ------------------ IDENTIFY TOP TRAINING SAMPLE PER CATEGORY ------------------
+best_samples = {}
+for category in ["top", "bottom"]:
+    category_df = train_df[train_df["category"] == category]
+    best_row = category_df.loc[category_df["F1"].idxmax()]
+    best_samples[category] = {
+        "prompt_id": best_row["prompt_id"],
+        "sample_id": int(
+            best_row["prompt_id"].split("_")[2]
+        ),  # expects format: top_fewshot_12_nX
+    }
+
+print(f"Selected best sample IDs: {best_samples}")
+
+# ------------------ FETCH BEST EXAMPLES ------------------
+selected_examples = {}
+for category, sample_info in best_samples.items():
+    sample_id = sample_info["sample_id"]
+    matched = [s for s in fewshot_samples if s["sample_id"] == sample_id]
+    assert len(matched) == 1, f"Expected one match for sample_id={sample_id}"
+    selected_examples[category] = matched[0]["examples"]
+
+# ------------------ EVALUATE ON DEV SET ------------------
+response_rows = []
+for category, base_prompt in [("top", top_prompt), ("bottom", bottom_prompt)]:
+    example_block = "\n".join(
         [
             f'Text: "{ex["text"]}"\nAnswer: {"Yes" if ex["label"] == 1 else "No"}'
-            for ex in fewshot_examples
+            for ex in selected_examples[category]
         ]
     )
+    base_prompt = base_prompt.replace("Text:", "")
+    full_prompt = f"{base_prompt}\nHere are some examples:\n{example_block}\n\n"
+    prompt_id = f"{category}_fewshot_best_n{len(selected_examples[category])}"
 
-    for prompt_label, prompt_text in [("top", top_prompt), ("bottom", bottom_prompt)]:
-        full_prompt = intro + examples_text + f"\n\n{prompt_text.strip()} Text:"
-        prompt_id = f"{prompt_label}_fewshot_{sample_id}_n{num_examples}"
+    eval_rows = classify.evaluate_prompt(
+        prompt_text=full_prompt,
+        prompt_id=prompt_id,
+        df=df,
+        platform=PLATFORM,
+        temperature=0.0001,
+    )
 
-        eval_rows = classify.evaluate_prompt(
-            prompt_text=full_prompt,
-            prompt_id=prompt_id,
-            df=df,
-            platform=PLATFORM,
-            temperature=0.0001,
-        )
+    for row in eval_rows:
+        row["category"] = category
+        row["num_examples"] = len(selected_examples[category])
+    response_rows.extend(eval_rows)
 
-        response_rows.extend(eval_rows)
-
-# ------------------ EXPORT RESPONSES ------------------
+# ------------------ EXPORT ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(RESPONSE_PATH, index=False)
 
-# ------------------ EXPORT METRICS ------------------
 classify.export_results_to_excel(
     df=long_df,
     output_path=RESULTS_PATH,
-    group_col="prompt_id",
+    group_col=["prompt_id", "category", "num_examples"],
     prompt_col="prompt",
     sheet_name="results",
     include_se=True,
 )
-# %%

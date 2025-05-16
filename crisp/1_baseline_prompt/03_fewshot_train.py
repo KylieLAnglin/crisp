@@ -9,9 +9,6 @@ import random
 
 from crisp.library import start, classify
 
-#####
-# BROKEN!
-#####
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
@@ -66,6 +63,9 @@ if os.path.exists(FEWSHOT_EXAMPLES_PATH):
     )
     with open(FEWSHOT_EXAMPLES_PATH, "r") as f:
         sample_examples = json.load(f)
+        if SAMPLE:
+            sample_examples = random.sample(sample_examples, 5)
+
 else:
     print("Generating new few-shot samples...")
     sample_examples = []
@@ -102,9 +102,9 @@ for sample in tqdm(sample_examples, desc="Evaluating Few-shot Samples"):
     )
 
     for category, base_prompt in [("top", top_prompt), ("bottom", bottom_prompt)]:
-        full_prompt = (
-            f"Here are some examples:\n{example_block}\n\n{base_prompt.strip()} Text:"
-        )
+        base_prompt = base_prompt.replace("Text:", "")
+
+        full_prompt = f"{base_prompt}\nHere are some examples:\n{example_block}\n\n"
         prompt_id = f"{category}_fewshot_{sample_id}_n{num_examples}"
 
         eval_rows = classify.evaluate_prompt(
