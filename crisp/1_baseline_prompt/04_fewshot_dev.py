@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from crisp.library import start, classify
 
+# This is just a test for github
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
