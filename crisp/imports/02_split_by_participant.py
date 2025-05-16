@@ -98,7 +98,7 @@ final_df[final_df.construct == "meaning_making"].to_excel(
     start.DATA_DIR + "clean/meaning_making.xlsx", index=False
 )
 final_df[final_df.construct == "negative_core_beliefs"].to_excel(
-    start.DATA_DIR + "clean/negative_core_beliefs.xlsx", index=False
+    start.DATA_DIR + "clean/ncb.xlsx", index=False
 )
 
 # %%
