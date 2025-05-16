@@ -9,6 +9,9 @@ import random
 
 from crisp.library import start, classify
 
+#####
+# BROKEN!
+#####
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
@@ -25,7 +28,7 @@ print(f"Running few-shot setup and evaluation on {CONCEPT} with {MODEL}")
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
 RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
 )
 FEWSHOT_EXAMPLES_PATH = (
     start.DATA_DIR + f"fewshot_examples/{CONCEPT}_fewshot_train_samples.json"

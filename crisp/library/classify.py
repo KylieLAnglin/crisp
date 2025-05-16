@@ -50,7 +50,7 @@ def format_message_and_get_response(
         return cleaned_response, response.system_fingerprint
 
     elif model_provider == "llama":
-        # Placeholder: add llama integration if needed
+        # Placeholder: add llama integration
         return "llama_fake_response", "llama_fingerprint"
 
     else:

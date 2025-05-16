@@ -7,6 +7,9 @@ from tqdm import tqdm
 
 from crisp.library import start, classify
 
+#####
+# BROKEN!
+#####
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
@@ -22,7 +25,7 @@ EXAMPLES_PATH = (
     start.DATA_DIR + f"fewshot_examples/{CONCEPT}_fewshot_train_samples.json"
 )
 BASELINE_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
 )
 RESPONSE_PATH = (
     start.DATA_DIR + f"responses_dev/{PLATFORM}_{CONCEPT}_fewshot_responses_dev.xlsx"
