@@ -46,10 +46,10 @@ def parse_final_answer(response_text: str) -> int:
 
 # ------------------ LOAD TOP + BOTTOM BASELINE PROMPTS ------------------
 baseline_results = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
-top_prompt = baseline_results.loc[baseline_results["F1"].idxmax(), "Prompt"].replace(
+top_prompt = baseline_results.loc[baseline_results["F1"].idxmax(), "prompt"].replace(
     "Text:", ""
 )
-bottom_prompt = baseline_results.loc[baseline_results["F1"].idxmin(), "Prompt"].replace(
+bottom_prompt = baseline_results.loc[baseline_results["F1"].idxmin(), "prompt"].replace(
     "Text:", ""
 )
 
