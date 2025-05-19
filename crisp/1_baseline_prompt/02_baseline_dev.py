@@ -1,26 +1,25 @@
 # 02_baseline_dev.py
 # %%
-import os
 import pandas as pd
 from tqdm import tqdm
-from datetime import datetime
-from openpyxl import Workbook, load_workbook
 
 from crisp.library import start, classify
 
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
+
 PLATFORM = start.PLATFORM
 MODEL = start.MODEL
+
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
-print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in dev set")
+print(f"Running baseline dev on {CONCEPT} with {PLATFORM} {MODEL} in dev set")
 
 # ------------------ PATHS ------------------
-PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
-TRAIN_RESULTS_PATH = (
+
+IMPORT_RESULTS_PATH = (
     start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
 )
 RESPONSE_PATH = (
@@ -38,14 +37,13 @@ if SAMPLE:
     df = df.sample(5, random_state=SEED)
 
 # ------------------ LOAD PROMPTS ------------------
-train_results = pd.read_excel(TRAIN_RESULTS_PATH, sheet_name="results")
+train_results = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
 top_id = train_results.loc[train_results["F1"].idxmax(), "prompt_id"]
 bottom_id = train_results.loc[train_results["F1"].idxmin(), "prompt_id"]
 
-prompt_df = pd.read_excel(PROMPT_PATH, sheet_name="baseline")
-prompt_df["prompt_id"] = prompt_df.index
-prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text: ", "", regex=False)
-prompt_df = prompt_df[prompt_df["prompt_id"].isin([top_id, bottom_id])]
+prompt_df = pd.DataFrame([top_id, bottom_id])
+prompt_df["prompt_id"] = ["top_best_persona", "bottom_best_persona"]
+prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text:", "", regex=False)
 
 # ------------------ GENERATE RESPONSES ------------------
 response_rows = []
