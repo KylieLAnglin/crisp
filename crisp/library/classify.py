@@ -1,14 +1,16 @@
 # classify.py
 import os
-import shutil
 from datetime import datetime
-
+import os
+import json
+import random
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from openai import OpenAI
 from openpyxl import Workbook, load_workbook
+
 
 from crisp.library import secrets, start
 from . import metric_standard_errors
@@ -251,3 +253,91 @@ def export_results_to_excel(
         row += 1
 
     wb.save(output_path)
+
+
+def evaluate_fewshot_prompt_combinations(
+    samples,
+    df_eval,
+    prompt_dict,
+    platform,
+    temperature=0.0001,
+    prefix="fewshot",
+    label_format_fn=None,
+    verbose=True,
+):
+    """
+    Evaluate few-shot samples across multiple prompt categories.
+
+    Parameters
+    ----------
+    samples : list of dict
+        Each dict should have keys:
+            - "sample_id": unique identifier
+            - "num_examples": number of examples
+            - "examples": list of dicts with "text" and "label"
+
+    df_eval : pd.DataFrame
+        DataFrame of evaluation texts and ground-truth labels.
+
+    prompt_dict : dict
+        Mapping from category name to base prompt text (e.g., {"top": ..., "bottom": ...}).
+
+    platform : str
+        Platform used for inference (e.g., "gpt-4").
+
+    temperature : float, default=0.0001
+        Model temperature setting.
+
+    prefix : str, default="fewshot"
+        String used in naming prompt_id (e.g., "top_fewshot_12_n5").
+
+    label_format_fn : function or None
+        Optional function to convert binary label to string (e.g., 1 → "Yes", 0 → "No").
+        If None, defaults to "Yes"/"No".
+
+    verbose : bool, default=True
+        Whether to display a progress bar.
+
+    Returns
+    -------
+    response_rows : list of dict
+        Results from classification, with metadata columns: category, num_examples, prompt_id.
+    """
+
+    if label_format_fn is None:
+        label_format_fn = lambda label: "Yes" if label == 1 else "No"
+
+    response_rows = []
+    iterator = tqdm(samples, desc="Evaluating Few-shot Samples") if verbose else samples
+
+    for sample in iterator:
+        sample_id = sample["sample_id"]
+        num_examples = sample["num_examples"]
+        example_block = "\n".join(
+            [
+                f'Text: "{ex["text"]}"\nAnswer: {label_format_fn(ex["label"])}'
+                for ex in sample["examples"]
+            ]
+        )
+
+        for category, base_prompt in prompt_dict.items():
+            base_prompt_clean = base_prompt.replace("Text:", "")
+            full_prompt = (
+                f"{base_prompt_clean}\nHere are some examples:\n{example_block}\n\n"
+            )
+            prompt_id = f"{category}_{prefix}_{sample_id}_n{num_examples}"
+
+            eval_rows = evaluate_prompt(
+                prompt_text=full_prompt,
+                prompt_id=prompt_id,
+                df=df_eval,
+                platform=platform,
+                temperature=temperature,
+            )
+
+            for row in eval_rows:
+                row["category"] = category
+                row["num_examples"] = num_examples
+            response_rows.extend(eval_rows)
+
+    return response_rows

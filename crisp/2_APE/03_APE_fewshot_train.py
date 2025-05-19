@@ -1,12 +1,11 @@
 # 1_baseline_prompt/03_fewshot_train.py
 # %%
-import json
 import os
-import random
-
+import json
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import random
 
 from crisp.library import start, classify
 
@@ -22,24 +21,25 @@ SEED = start.SEED
 random.seed(SEED)
 rng = np.random.default_rng(SEED)
 
-print(f"Running few-shot setup and evaluation on {CONCEPT} with {MODEL} in train set")
+print(f"Running few-shot for APE on {CONCEPT} with {MODEL} in train set")
 
 # ------------------ PATHS ------------------
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 
-IMPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
-)
-
 FEWSHOT_EXAMPLES_PATH = (
     start.DATA_DIR + f"fewshot_examples/{CONCEPT}_fewshot_train_samples.json"
 )
+
+IMPORT_RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_ape_zero_results_dev.xlsx"
+)
+
 EXPORT_RESPONSE_PATH = (
     start.DATA_DIR
-    + f"responses_train/{PLATFORM}_{CONCEPT}_baseline_few_responses_train.xlsx"
+    + f"responses_train/{PLATFORM}_{CONCEPT}_ape_few_responses_train.xlsx"
 )
 EXPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_few_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_ape_few_results_train.xlsx"
 )
 
 # ------------------ LOAD TRAINING DATA ------------------
@@ -62,35 +62,11 @@ bottom_prompt = bottom_prompt.replace("Text:", "")
 
 # ------------------ GENERATE OR LOAD FEWSHOT SAMPLES ------------------
 
-if os.path.exists(FEWSHOT_EXAMPLES_PATH):
-    print(
-        f"Few-shot samples already exist at {FEWSHOT_EXAMPLES_PATH}, loading from file..."
-    )
-    with open(FEWSHOT_EXAMPLES_PATH, "r") as f:
-        sample_examples = json.load(f)
 
-else:
-    print("Generating new few-shot samples...")
-    sample_examples = []
-    for sample_num in range(1, 51):
-        num_examples = rng.integers(1, 11)
-        sampled = df_fewshot_pool.sample(num_examples, random_state=sample_num)
-        examples = [
-            {"text": text, "label": int(label)}
-            for text, label in zip(sampled["text"], sampled["human_code"])
-        ]
-        sample_examples.append(
-            {
-                "sample_id": int(sample_num),
-                "num_examples": int(num_examples),
-                "examples": examples,
-            }
-        )
-
-    os.makedirs(os.path.dirname(FEWSHOT_EXAMPLES_PATH), exist_ok=True)
-    with open(FEWSHOT_EXAMPLES_PATH, "w") as f:
-        json.dump(sample_examples, f, indent=2)
-    print(f"Saved {len(sample_examples)} few-shot samples to {FEWSHOT_EXAMPLES_PATH}")
+with open(FEWSHOT_EXAMPLES_PATH, "r") as f:
+    sample_examples = json.load(f)
+    if SAMPLE:
+        sample_examples = random.sample(sample_examples, 5)
 
 # ------------------ EVALUATE SAMPLES ------------------
 response_rows = classify.evaluate_fewshot_prompt_combinations(
@@ -101,6 +77,7 @@ response_rows = classify.evaluate_fewshot_prompt_combinations(
     temperature=0.0001,
     prefix="fewshot",
 )
+
 # ------------------ EXPORT RESPONSES AND METRICS ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)

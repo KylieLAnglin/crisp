@@ -22,14 +22,14 @@ EXAMPLES_PATH = (
     start.DATA_DIR + f"fewshot_examples/{CONCEPT}_fewshot_train_samples.json"
 )
 BASELINE_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_few_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_persona_zero_results_dev.xlsx"
 )
 RESPONSE_PATH = (
     start.DATA_DIR
-    + f"responses_dev/{PLATFORM}_{CONCEPT}_baseline_few_responses_dev.xlsx"
+    + f"responses_dev/{PLATFORM}_{CONCEPT}_persona_few_responses_dev.xlsx"
 )
 RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_few_results_dev.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_persona_few_results_dev.xlsx"
 )
 
 # ------------------ LOAD DATA ------------------
@@ -55,7 +55,7 @@ prompt_df = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
 # highest F1 score for category = bottom
 
 prompt_df = prompt_df[
-    prompt_df.groupby("category")["F1"].transform(max) == prompt_df["F1"]
+    prompt_df.groupby("prompt_id")["F1"].transform(max) == prompt_df["F1"]
 ]
 prompt_df = prompt_df.reset_index(drop=True)
 
