@@ -3,6 +3,10 @@ numpy
 pandas
 ipykernel
 
+# models
+OpenAI
+langchain_ollama
+
 # formatting
 black
 
