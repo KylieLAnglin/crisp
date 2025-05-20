@@ -41,8 +41,7 @@ train_results = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
 top_id = train_results.loc[train_results["F1"].idxmax(), "prompt_id"]
 bottom_id = train_results.loc[train_results["F1"].idxmin(), "prompt_id"]
 
-prompt_df = pd.DataFrame([top_id, bottom_id])
-prompt_df["prompt_id"] = ["top_best_persona", "bottom_best_persona"]
+prompt_df = train_results[train_results["prompt_id"].isin([top_id, bottom_id])]
 prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text:", "", regex=False)
 
 # ------------------ GENERATE RESPONSES ------------------
