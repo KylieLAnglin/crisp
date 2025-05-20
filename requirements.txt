@@ -2,7 +2,7 @@
 numpy
 pandas
 ipykernel
-sklearn
+scikit-learn
 
 # models
 openai
