@@ -2,6 +2,7 @@
 numpy
 pandas
 ipykernel
+sklearn
 
 # models
 openai
