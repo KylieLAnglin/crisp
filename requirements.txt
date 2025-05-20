@@ -4,7 +4,7 @@ pandas
 ipykernel
 
 # models
-OpenAI
+openai
 langchain_ollama
 
 # formatting
