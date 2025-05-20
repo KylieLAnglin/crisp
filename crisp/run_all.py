@@ -35,8 +35,15 @@ script_paths = [
     # "3_persona/03_persona_fewshot_dev.py",
     # 4. Chain of Thought - Zero
     # "4_zero_shot_cot/01_cot_zero_dev.py",
-    "4_zero_shot_cot/02_cot_fewshot_train.py",
-    "4_zero_shot_cot/03_cot_fewshot_dev.py",
+    # "4_zero_shot_cot/02_cot_fewshot_train.py",
+    # "4_zero_shot_cot/03_cot_fewshot_dev.py",
+    # 5. Explaination
+    "5_explanation/01_explanation_fewshot_train.py",
+    "5_explanation/02_explanation_fewshot_dev.py",
+    # 6. Cloze
+    # "6_cloze.py/01_cloze_zero_dev.py",
+    # "6_cloze.py/02_cloze_fewshot_train.py",
+    # "6_cloze.py/03_cloze_fewshot_dev.py",
 ]
 
 # ------------------ Run Scripts ------------------

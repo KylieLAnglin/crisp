@@ -44,9 +44,12 @@ if SAMPLE:
 train_df = pd.read_excel(TRAIN_RESULTS_PATH, sheet_name="results")
 
 # Keep top-performing prompt for each category (top, bottom)
-best_prompts = train_df.loc[
-    train_df.groupby("category")["F1"].transform(max) == train_df["F1"]
-].reset_index(drop=True)
+best_prompts = (
+    train_df.sort_values(["category", "F1"], ascending=[True, False])
+    .groupby("category", as_index=False)
+    .first()
+    .reset_index(drop=True)
+)
 
 # ------------------ EVALUATE ON DEV SET ------------------
 response_rows = []
@@ -67,7 +70,6 @@ for row in tqdm(
     for r in eval_rows:
         r["prompt_id"] = prompt_id
         r["category"] = row.category
-        r["num_examples"] = row.num_examples
         r["prompt"] = prompt_text
 
     response_rows.extend(eval_rows)
@@ -79,7 +81,10 @@ long_df.to_excel(DEV_RESPONSE_PATH, index=False)
 classify.export_results_to_excel(
     df=long_df,
     output_path=DEV_RESULTS_PATH,
-    group_col=["prompt_id", "category", "num_examples"],
+    group_col=[
+        "prompt_id",
+        "category",
+    ],
     prompt_col="prompt",
     sheet_name="results",
     include_se=True,

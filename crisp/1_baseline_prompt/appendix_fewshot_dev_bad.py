@@ -14,7 +14,7 @@ MODEL = start.MODEL
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
-print(f"Running COT few-shot evaluation on {CONCEPT} with {MODEL} in dev set")
+print(f"Running few-shot evaluation on {CONCEPT} with {MODEL} in dev set")
 
 # ------------------ PATHS ------------------
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
@@ -22,13 +22,15 @@ EXAMPLES_PATH = (
     start.DATA_DIR + f"fewshot_examples/{CONCEPT}_fewshot_train_samples.json"
 )
 BASELINE_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_cot_few_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_few_results_train.xlsx"
 )
-
 RESPONSE_PATH = (
-    start.DATA_DIR + f"responses_dev/{PLATFORM}_{CONCEPT}_cot_few_responses_dev.xlsx"
+    start.DATA_DIR
+    + f"responses_dev/{PLATFORM}_{CONCEPT}_baseline_badfew_responses_dev.xlsx"
 )
-RESULTS_PATH = start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_cot_few_results_dev.xlsx"
+RESULTS_PATH = (
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_badfew_results_dev.xlsx"
+)
 
 # ------------------ LOAD DATA ------------------
 df = pd.read_excel(DATA_PATH)
@@ -53,7 +55,7 @@ prompt_df = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
 # highest F1 score for category = bottom
 
 prompt_df = prompt_df[
-    prompt_df.groupby("category")["F1"].transform(max) == prompt_df["F1"]
+    prompt_df.groupby("category")["F1"].transform(min) == prompt_df["F1"]
 ]
 prompt_df = prompt_df.reset_index(drop=True)
 

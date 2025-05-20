@@ -248,7 +248,7 @@ def export_results_to_excel(
             ws.cell(
                 row=row,
                 column=col,
-                value=round(val, 2) if isinstance(val, float) else val,
+                value=round(val, 3) if isinstance(val, float) else val,
             )
         row += 1
 

@@ -1,9 +1,8 @@
-# 1_baseline_prompt/02_cot_fewshot_prep.py
+# 1_baseline_prompt/01_explanation_fewshot_train.py
 # %%
 import os
 import json
 from itertools import product
-
 import pandas as pd
 from tqdm import tqdm
 import random
@@ -17,11 +16,6 @@ MODEL = start.MODEL
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
-COT_TASK_SUFFIX = (
-    " First, explain your reasoning step by step. "
-    "Then, state your final answer — either Yes or No — using the format: Final Answer: [Yes or No]"
-)
-
 # ------------------ PATHS ------------------
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 EXAMPLES_PATH = (
@@ -34,24 +28,20 @@ IMPORT_BASELINE_PROMPTS = (
     start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
 )
 
-TEMP_TOP_PATH = start.DATA_DIR + f"temp/{PLATFORM}_{CONCEPT}_cot_few_top_examples.xlsx"
-TEMP_BOTTOM_PATH = (
-    start.DATA_DIR + f"temp/{PLATFORM}_{CONCEPT}_cot_few_bottom_examples.xlsx"
-)
-EXCEL_TOP_COT_PATH = (
+EXCEL_TOP_EXPL_PATH = (
     start.DATA_DIR + f"fewshot_examples/{PLATFORM}_{CONCEPT}_cot_few_top_examples.xlsx"
 )
-EXCEL_BOTTOM_COT_PATH = (
+EXCEL_BOTTOM_EXPL_PATH = (
     start.DATA_DIR
     + f"fewshot_examples/{PLATFORM}_{CONCEPT}_cot_few_bottom_examples.xlsx"
 )
 
 EXPORT_RESPONSE_PATH = (
     start.DATA_DIR
-    + f"responses_train/{PLATFORM}_{CONCEPT}_cot_few_responses_train.xlsx"
+    + f"responses_train/{PLATFORM}_{CONCEPT}_explanation_few_responses_train.xlsx"
 )
 EXPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_cot_few_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_explanation_few_results_train.xlsx"
 )
 
 # ------------------ LOAD TRAINING DATA ------------------
@@ -63,13 +53,13 @@ if SAMPLE:
 
 # ------------------ IDENTIFY BEST PROMPT IDs ------------------
 baseline_df = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
-top_row = baseline_df.loc[baseline_df["F1"].idxmax()]
-bottom_row = baseline_df.loc[baseline_df["F1"].idxmin()]
+top_prompt_id = int(
+    baseline_df.loc[baseline_df["F1"].idxmax(), "prompt_id"].split("_")[2]
+)
+bottom_prompt_id = int(
+    baseline_df.loc[baseline_df["F1"].idxmin(), "prompt_id"].split("_")[2]
+)
 
-top_prompt_id = int(top_row["prompt_id"].split("_")[2])
-bottom_prompt_id = int(bottom_row["prompt_id"].split("_")[2])
-
-# Load clean top/bottom prompt text from baseline zero-shot file
 prompt_df = pd.read_excel(IMPORT_BASELINE_PROMPTS, sheet_name="results")
 top_prompt = (
     prompt_df.loc[prompt_df["F1"].idxmax(), "prompt"].replace("Text:", "").strip()
@@ -77,9 +67,6 @@ top_prompt = (
 bottom_prompt = (
     prompt_df.loc[prompt_df["F1"].idxmin(), "prompt"].replace("Text:", "").strip()
 )
-
-top_prompt += COT_TASK_SUFFIX
-bottom_prompt += COT_TASK_SUFFIX
 
 # ------------------ LOAD FEWSHOT EXAMPLES ------------------
 example_combinations = pd.read_json(EXAMPLES_PATH)
@@ -94,24 +81,20 @@ bottom_examples = example_combinations.loc[
     example_combinations["sample_id"] == bottom_prompt_id, "examples"
 ].values[0]
 
-pd.DataFrame(top_examples).to_excel(TEMP_TOP_PATH, index=False)
-pd.DataFrame(bottom_examples).to_excel(TEMP_BOTTOM_PATH, index=False)
-
-# ------------------ LOAD COT-LABELED EXAMPLES ------------------
-top_examples_cot_df = pd.read_excel(EXCEL_TOP_COT_PATH)
-bottom_examples_cot_df = pd.read_excel(EXCEL_BOTTOM_COT_PATH)
+top_examples_expl_df = pd.read_excel(EXCEL_TOP_EXPL_PATH)
+bottom_examples_expl_df = pd.read_excel(EXCEL_BOTTOM_EXPL_PATH)
 
 
-# ------------------ GENERATE COT VARIANTS ------------------
-def generate_cot_prompt_variants(example_df, base_prompt, id_prefix="cot"):
+# ------------------ GENERATE EXPLANATION PROMPT VARIANTS ------------------
+def generate_explanation_prompt_variants(example_df, base_prompt, id_prefix="explain"):
     n = len(example_df)
     variants = []
     for combo in product([1, 2], repeat=n):
         parts = []
         for i, row in enumerate(example_df.itertuples()):
-            cot = row.exemplar_cot1 if combo[i] == 1 else row.exemplar_cot2
+            explanation = row.exemplar_cot1 if combo[i] == 1 else row.exemplar_cot2
             answer = "Yes" if row.label == 1 else "No"
-            block = f'Text: "{row.text}"\nReasoning: {cot}\nFinal Answer: {answer}'
+            block = f'Text: "{row.text}"\nAnswer: {answer}\n Explanation: {explanation}'
             parts.append(block)
 
         example_block = "\n\n".join(parts)
@@ -129,42 +112,38 @@ def generate_cot_prompt_variants(example_df, base_prompt, id_prefix="cot"):
     return variants
 
 
-# ------------------ SAMPLE FIXED + RANDOM COMBINATIONS ------------------
+# ------------------ SELECT FIXED + RANDOM COMBINATIONS ------------------
 def select_with_anchors(variants, seed, total=5):
     random.seed(seed)
-
-    # Identify all-1s and all-2s
     all_ones = next(v for v in variants if set(v["combination"]) == {1})
     all_twos = next(v for v in variants if set(v["combination"]) == {2})
-
     rest = [v for v in variants if v not in [all_ones, all_twos]]
     sampled = random.sample(rest, min(total - 2, len(rest)))
-
     return [all_ones, all_twos] + sampled
 
 
-top_cot_variants_all = generate_cot_prompt_variants(
-    top_examples_cot_df, top_prompt, id_prefix="topcot"
+top_expl_variants_all = generate_explanation_prompt_variants(
+    top_examples_expl_df, base_prompt=top_prompt, id_prefix="top_explain"
 )
-bottom_cot_variants_all = generate_cot_prompt_variants(
-    bottom_examples_cot_df, bottom_prompt, id_prefix="botcot"
+bottom_expl_variants_all = generate_explanation_prompt_variants(
+    bottom_examples_expl_df, base_prompt=bottom_prompt, id_prefix="bot_explain"
 )
 
-top_cot_variants = select_with_anchors(top_cot_variants_all, seed=SEED)
-bottom_cot_variants = select_with_anchors(bottom_cot_variants_all, seed=SEED)
+top_expl_variants = select_with_anchors(top_expl_variants_all, SEED)
+bottom_expl_variants = select_with_anchors(bottom_expl_variants_all, SEED)
 
 if SAMPLE:
-    top_cot_variants = top_cot_variants[:5]
-    bottom_cot_variants = bottom_cot_variants[:5]
+    top_expl_variants = top_expl_variants[:5]
+    bottom_expl_variants = bottom_expl_variants[:5]
 
 
-# ------------------ EVALUATE COT VARIANTS ------------------
-def evaluate_cot_variants(
+# ------------------ EVALUATE ------------------
+def evaluate_expl_variants(
     prompt_variants, df_eval, platform, temperature=0.0001, verbose=True
 ):
     response_rows = []
     iterator = (
-        tqdm(prompt_variants, desc="Evaluating CoT Prompts")
+        tqdm(prompt_variants, desc="Evaluating Explanation Prompts")
         if verbose
         else prompt_variants
     )
@@ -191,10 +170,10 @@ def evaluate_cot_variants(
     return response_rows
 
 
-top_response_rows = evaluate_cot_variants(top_cot_variants, df, PLATFORM)
-bottom_response_rows = evaluate_cot_variants(bottom_cot_variants, df, PLATFORM)
+top_response_rows = evaluate_expl_variants(top_expl_variants, df, PLATFORM)
+bottom_response_rows = evaluate_expl_variants(bottom_expl_variants, df, PLATFORM)
 
-# add category to each row
+# Add category
 for row in top_response_rows:
     row["category"] = "top"
 for row in bottom_response_rows:
@@ -203,7 +182,6 @@ for row in bottom_response_rows:
 # ------------------ EXPORT ------------------
 all_rows = top_response_rows + bottom_response_rows
 long_df = pd.DataFrame(all_rows)
-
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
 
 classify.export_results_to_excel(
