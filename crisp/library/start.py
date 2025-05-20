@@ -10,7 +10,8 @@ RAW_DIR = ONEDRIVE + "Materials for LLM/"
 
 PLATFORM = "openai"
 
-if PLATFORM == "openai":
-    MODEL = "gpt-4.1-2025-04-14"
+models = {"openai": "gpt-4.1-2025-04-14", "llama": "llama3.2"}
+
+MODEL = models[PLATFORM]
 
 SEED = 123
