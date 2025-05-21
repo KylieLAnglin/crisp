@@ -10,6 +10,7 @@ from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from openai import OpenAI
 from openpyxl import Workbook, load_workbook
+from langchain_ollama import OllamaLLM
 
 
 from crisp.library import secrets, start
@@ -59,6 +60,7 @@ def format_message_and_get_response(
         raise ValueError(f"Unsupported model provider: {model_provider}")
 
 # llama
+
 ollama_server_url = "http://localhost:11434"
 llm = OllamaLLM(model = start.MODEL, base_url = ollama_server_url)
 

@@ -3,6 +3,7 @@ numpy
 pandas
 ipykernel
 scikit-learn
+openpyxl
 
 # models
 openai
