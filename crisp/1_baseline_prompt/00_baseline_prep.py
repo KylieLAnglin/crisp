@@ -1,5 +1,4 @@
 # A0_baseline_prep.py
-# %%
 import pandas as pd
 import numpy as np
 
@@ -40,6 +39,3 @@ with pd.ExcelWriter(
     PROMPT_PATH, mode="a", engine="openpyxl", if_sheet_exists="replace"
 ) as writer:
     prompt_df.to_excel(writer, sheet_name="baseline", index=False)
-
-
-# %%

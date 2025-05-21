@@ -1,5 +1,4 @@
 # 1_baseline_prompt/03_fewshot_train.py
-# %%
 import json
 import os
 import random
@@ -113,4 +112,3 @@ classify.export_results_to_excel(
     sheet_name="results",
     include_se=True,
 )
-# %%

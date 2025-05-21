@@ -1,5 +1,4 @@
 # 01_baseline_train.py
-# %%
 import pandas as pd
 from tqdm import tqdm
 
@@ -68,4 +67,3 @@ classify.export_results_to_excel(
     sheet_name="results",
     include_se=False,
 )
-# %%

@@ -12,13 +12,13 @@ SAMPLE = False
 if USER == "Kylie":
     CODE_DIR = "/Users/kla21002/crisp/crisp/"
     ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/crisp"
-if USER == "Brittney":
+elif USER == "Brittney":
     CODE_DIR = "/Users/brittneyhernandez/Documents/github/crisp/crisp/"
     ONEDRIVE = "/Users/brittneyhernandez/Library/CloudStorage/OneDrive-UniversityofConnecticut/project crisp/Anglin, Kylie's files - crisp/"
-if USER == "Claudia":
+elif USER == "Claudia":
     CODE_DIR = "add/path/to/crisp/crisp/repo/"
     ONEDRIVE = "add/path/to/OneDrive/"
-if USER == "HPC":
+elif USER == "HPC":
     import os
     CODE_DIR = os.getcwd() + "/crisp/crisp" # don't clone crisp repo in a subfolder on hpc
     ONEDRIVE = os.getcwd() + "/crisp/crisp/hpc/"
@@ -32,7 +32,7 @@ RAW_DIR = ONEDRIVE + "Materials for LLM/"
 # ------------------ MODEL ------------------
 if PLATFORM == "openai":
     MODEL = "gpt-4.1-2025-04-14"
-if PLATFORM == "llama":
+elif PLATFORM == "llama":
     MODEL = "llama3.2"
 
 # ------------------ OTHERS ------------------
