@@ -44,6 +44,12 @@ prompt_df = train_results[train_results["prompt_id"].isin([top_id, bottom_id])]
 prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text:", "", regex=False)
 
 # ------------------ GENERATE RESPONSES ------------------
+
+for row in tqdm(prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts"):
+    print(row)
+    prompt_text = row.prompt
+    prompt_id = row.prompt_id
+
 response_rows = []
 for row in tqdm(
     prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts"

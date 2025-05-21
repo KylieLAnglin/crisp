@@ -59,12 +59,12 @@ def format_message_and_get_response(
         return cleaned_response, response.system_fingerprint
 
     elif model_provider == "llama":
-        messages = [{"role": "user", "content": prompt + text_to_classify}]
+        messages = prompt + [{"role": "user", "content": text_to_classify}]
         llm = OllamaLLM(
             model = start.MODEL, 
             base_url = ollama_server_url, 
             temperature = temperature,
-            num_predict = 5,
+            num_predict = 20,
             seed = start.SEED)
         response = llm.invoke(messages)
         if response.isdigit() is False:
