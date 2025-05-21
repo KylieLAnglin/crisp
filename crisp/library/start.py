@@ -11,7 +11,7 @@ SAMPLE = False
 # ------------------ PATHS ------------------
 if USER == "Kylie":
     CODE_DIR = "/Users/kla21002/crisp/crisp/"
-    ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/"
+    ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/crisp"
 if USER == "Brittney":
     CODE_DIR = "/Users/brittneyhernandez/Documents/github/crisp/crisp/"
     ONEDRIVE = "/Users/brittneyhernandez/Library/CloudStorage/OneDrive-UniversityofConnecticut/project crisp/Anglin, Kylie's files - crisp/"
@@ -23,7 +23,7 @@ if USER == "HPC":
     CODE_DIR = os.getcwd() + "/crisp/crisp" # don't clone crisp repo in a subfolder on hpc
     ONEDRIVE = os.getcwd() + "/crisp/crisp/hpc/"
 
-MAIN_DIR = ONEDRIVE + "crisp/"
+MAIN_DIR = ONEDRIVE
 DATA_DIR = MAIN_DIR + "data/"
 RESULTS_DIR = MAIN_DIR + "results/"
 RAW_DIR = ONEDRIVE + "Materials for LLM/"
