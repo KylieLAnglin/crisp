@@ -14,7 +14,7 @@ if USER == "Kylie":
     ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/"
 if USER == "Brittney":
     CODE_DIR = "/Users/brittneyhernandez/Documents/github/crisp/crisp/"
-    ONEDRIVE = "/Users/brittneyhernandez/Library/CloudStorage/OneDrive-UniversityofConnecticut/"
+    ONEDRIVE = "/Users/brittneyhernandez/Library/CloudStorage/OneDrive-UniversityofConnecticut/project crisp/Anglin, Kylie's files - crisp/"
 if USER == "Claudia":
     CODE_DIR = "add/path/to/crisp/crisp/repo/"
     ONEDRIVE = "add/path/to/OneDrive/"
