@@ -1,17 +1,24 @@
-ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/"
+# ------------------ UPDATE HERE ------------------
+USER = "Kylie"
+PLATFORM = "openai"
+CONCEPT = "mm"
+SAMPLE = False
+# ------------------ PATHS ------------------
 
+
+if USER == "Kylie":
+    # Kylie
+    CODE_DIR = "/Users/kla21002/crisp/crisp/"
+    ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/"
 
 MAIN_DIR = ONEDRIVE + "crisp/"
-
 DATA_DIR = MAIN_DIR + "data/"
 RESULTS_DIR = MAIN_DIR + "results/"
-
 RAW_DIR = ONEDRIVE + "Materials for LLM/"
 
-PLATFORM = "openai"
+# ------------------ MODEL ------------------
+if PLATFORM == "openai":
+    MODEL = "gpt-4.1-2025-04-14"
 
-models = {"openai": "gpt-4.1-2025-04-14", "llama": "llama3.2"}
-
-MODEL = models[PLATFORM]
-
+# ------------------ OTHERS ------------------
 SEED = 123

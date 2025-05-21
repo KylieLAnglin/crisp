@@ -5,9 +5,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+SEED = start.SEED
+np.random.seed(SEED)
 # %%
 df1 = pd.read_excel(start.DATA_DIR + "temp/meaning_making.xlsx")
-df1["construct"] = "meaning_making"
+df1["construct"] = "mm"
 df1 = df1[
     [
         "participant_id",
@@ -23,7 +25,7 @@ df1 = df1[df1.human_code.notna()]
 
 # %%
 df2 = pd.read_excel(start.DATA_DIR + "temp/negative_core_beliefs.xlsx")
-df2["construct"] = "negative_core_beliefs"
+df2["construct"] = "ncb"
 df2 = df2[
     [
         "participant_id",
@@ -93,35 +95,31 @@ participant_df.to_excel(start.DATA_DIR + "clean/participant_split.xlsx", index=F
 
 # %%
 final_df = df.merge(participant_df, on=["participant_id", "study"], how="inner")
-
-final_df[final_df.construct == "meaning_making"].to_excel(
-    start.DATA_DIR + "clean/meaning_making.xlsx", index=False
-)
-final_df[final_df.construct == "negative_core_beliefs"].to_excel(
-    start.DATA_DIR + "clean/negative_core_beliefs.xlsx", index=False
-)
+final_df.to_excel(start.DATA_DIR + "clean/all_concepts_split.xlsx", index=False)
 
 # %%
-# Bar graph, number of pos/neg ncg examples in train, dev, test
-temp_df = final_df[final_df.construct == "negative_core_beliefs"]
-plt.figure(figsize=(10, 6))
-temp_df.groupby(["split_group", "human_code"]).size().unstack().plot(kind="bar")
+for construct in final_df.construct.unique():
+    relevant_df = final_df[final_df.construct == construct].copy()
 
-plt.title("Number of Positive and Negative Negative Core Beliefs in Train, Dev, Test")
-plt.ylabel("Number of Examples")
-plt.xlabel("Split Group")
-plt.xticks(rotation=0)
-plt.show()
-# sort train dev test
+    relevant_df["train_use"] = pd.Series(dtype="object")
+
+    train_rows = relevant_df[relevant_df["split_group"] == "train"]
+
+    # Assign "example" to sampled train rows for few-shot training
+    example_sample = train_rows.sample(n=50, random_state=SEED)
+    relevant_df.loc[example_sample.index, "train_use"] = "example"
+
+    # Assign "eval" to remaining train rows
+    remaining_train_mask = (relevant_df["split_group"] == "train") & (
+        relevant_df["train_use"].isna()
+    )
+    relevant_df.loc[remaining_train_mask, "train_use"] = "eval"
+
+    # Save to Excel
+    relevant_df.to_excel(start.DATA_DIR + f"clean/{construct}.xlsx", index=False)
+# %%
+
 
 # %%
-# print proportion of positive and negative examples in each split
-temp_df = final_df[final_df.construct == "negative_core_beliefs"]
-temp_df = temp_df.groupby(["split_group", "human_code"]).size().unstack()
-temp_df = temp_df.fillna(0)
-temp_df = temp_df.div(temp_df.sum(axis=1), axis=0)
-temp_df = temp_df.reset_index()
-temp_df = temp_df.rename(columns={0: "negative", 1: "positive"})
-temp_df  # %%
 
 # %%
