@@ -17,10 +17,12 @@ print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in dev set")
 
 # ------------------ PATHS ------------------
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
-PROMPT_PATH_TOP = start.RESULTS_DIR + f"{PLATFORM}_{CONCEPT}_ape_zero_top_results.xlsx"
+PROMPT_PATH_TOP = start.RESULTS_DIR + f"{PLATFORM}_{CONCEPT}_ape_top_results_train.xlsx"
 PROMPT_PATH_BOTTOM = (
-    start.RESULTS_DIR + f"{PLATFORM}_{CONCEPT}_ape_zero_bottom_results.xlsx"
+    start.RESULTS_DIR + f"{PLATFORM}_{CONCEPT}_ape_bottom_results_train.xlsx"
 )
+
+
 EXPORT_RESPONSE_PATH = (
     start.DATA_DIR + f"responses_dev/{PLATFORM}_{CONCEPT}_ape_zero_responses_dev.xlsx"
 )
