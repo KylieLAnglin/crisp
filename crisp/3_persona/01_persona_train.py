@@ -30,11 +30,6 @@ EXPORT_RESULTS_PATH = (
 )
 
 # ------------------ CONSTANTS ------------------
-PERSONAS = [
-    "You are a brilliant psychologist. ",
-    "You are an excellent therapist. ",
-    "You are a very smart mental health researcher. ",
-]
 
 # ------------------ LOAD DATA ------------------
 df = pd.read_excel(DATA_PATH)
@@ -54,6 +49,8 @@ prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text: ", "", regex=False)
 top_prompt = prompt_df.loc[prompt_df.prompt_id == top_id, "prompt"].values[0]
 bottom_prompt = prompt_df.loc[prompt_df.prompt_id == bottom_id, "prompt"].values[0]
 
+personas_df = pd.read_excel(PROMPT_PATH, sheet_name="persona")
+PERSONAS = personas_df["persona"].tolist()
 # ------------------ CREATE PERSONA COMBOS ------------------
 combos = []
 combo_id = 1
