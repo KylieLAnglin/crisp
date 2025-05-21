@@ -25,3 +25,6 @@
 *.xml
 *.iml
 crisp/library/secrets.py
+
+#folders with comments
+\00_baseline_prep copy.py
