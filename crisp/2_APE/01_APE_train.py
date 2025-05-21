@@ -31,11 +31,11 @@ IMPORT_RESULTS_PATH = (
 
 TRACKING_PATHS = {
     "top": {
-        "csv": f"{start.RESULTS_DIR}{PLATFORM}_{CONCEPT}_ape_top_results.xlsx",
+        "csv": f"{start.RESULTS_DIR}{PLATFORM}_{CONCEPT}_ape_top_results_train.xlsx",
         "fig": f"{start.RESULTS_DIR}{PLATFORM}_{CONCEPT}_ape_evolution_top_train.png",
     },
     "bottom": {
-        "csv": f"{start.RESULTS_DIR}{PLATFORM}_{CONCEPT}_ape_bottom_results.xlsx",
+        "csv": f"{start.RESULTS_DIR}{PLATFORM}_{CONCEPT}_ape_bottom_results_train.xlsx",
         "fig": f"{start.RESULTS_DIR}{PLATFORM}_{CONCEPT}_ape_evolution_bottom_train.png",
     },
 }

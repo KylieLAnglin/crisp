@@ -1,26 +1,26 @@
 # 01_baseline_train.py
 # %%
-import os
 import pandas as pd
 from tqdm import tqdm
-from datetime import datetime
-from openpyxl import Workbook, load_workbook
 
-from crisp.library import start, secrets
+from crisp.library import start
 from crisp.library import classify
 
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
+
 PLATFORM = start.PLATFORM
 MODEL = start.MODEL
+
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
-print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in train set")
+print(f"Running baseline {CONCEPT} on {PLATFORM} with {MODEL} in train set")
 
 # ------------------ PATHS ------------------
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
+
 RESPONSE_PATH = (
     start.DATA_DIR
     + f"responses_train/{PLATFORM}_{CONCEPT}_baseline_zero_responses_train.xlsx"

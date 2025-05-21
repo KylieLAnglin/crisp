@@ -1,7 +1,7 @@
 # ------------------ UPDATE HERE ------------------
 USER = "Kylie"
 PLATFORM = "openai"
-CONCEPT = "ncb"
+CONCEPT = "mm"
 SAMPLE = False
 # ------------------ PATHS ------------------
 

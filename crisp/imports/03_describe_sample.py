@@ -54,3 +54,26 @@ recast[recast.question == "emotion"].negative_belief_any.mean()
 
 recast[recast.question == "emotion"].meaning_making.value_counts()
 recast[recast.question == "emotion"].meaning_making.mean()
+
+# %%
+# Bar graph, number of pos/neg ncg examples in train, dev, test
+temp_df = final_df[final_df.construct == "negative_core_beliefs"]
+plt.figure(figsize=(10, 6))
+temp_df.groupby(["split_group", "human_code"]).size().unstack().plot(kind="bar")
+
+plt.title("Number of Positive and Negative Negative Core Beliefs in Train, Dev, Test")
+plt.ylabel("Number of Examples")
+plt.xlabel("Split Group")
+plt.xticks(rotation=0)
+plt.show()
+# sort train dev test
+
+# %%
+# print proportion of positive and negative examples in each split
+temp_df = final_df[final_df.construct == "negative_core_beliefs"]
+temp_df = temp_df.groupby(["split_group", "human_code"]).size().unstack()
+temp_df = temp_df.fillna(0)
+temp_df = temp_df.div(temp_df.sum(axis=1), axis=0)
+temp_df = temp_df.reset_index()
+temp_df = temp_df.rename(columns={0: "negative", 1: "positive"})
+temp_df  # %%

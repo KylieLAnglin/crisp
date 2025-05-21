@@ -21,17 +21,29 @@ script_paths = [
     # 1. Baseline Prompt
     # "1_baseline_prompt/00_baseline_prep.py",
     # "1_baseline_prompt/01_baseline_train.py",
-    # "1_baseline_prompt/02_baseline_dev.py",
-    # "1_baseline_prompt/03_fewshot_train.py",
-    # "1_baseline_prompt/04_fewshot_dev.py",
-    # # 2. Automatic Prompt Engineering
+    "1_baseline_prompt/02_baseline_dev.py",
+    "1_baseline_prompt/03_fewshot_train.py",
+    "1_baseline_prompt/04_fewshot_dev.py",
+    # # # 2. Automatic Prompt Engineering
     # "2_APE/01_APE_train.py",
     # "2_APE/02_APE_dev.py",
-    # 3. Persona
-    "3_persona/01_persona_train.py",
-    "3_persona/02_persona_dev.py",
-    # 4. Chain of Thought - Zero
-    "4_zero_shot_cot/01_cot_zero_dev.py",
+    # "2_APE/03_APE_fewshot_train.py",
+    # "2_APE/04_APE_fewshot_dev.py",
+    # # 3. Persona
+    # "3_persona/01_persona_train.py",
+    # "3_persona/02_persona_dev.py",
+    # "3_persona/03_persona_fewshot_dev.py",
+    # # 4. Chain of Thought - Zero
+    # "4_zero_shot_cot/01_cot_zero_dev.py",
+    # "4_zero_shot_cot/02_cot_fewshot_train.py",
+    # "4_zero_shot_cot/03_cot_fewshot_dev.py",
+    # # 5. Explaination
+    # "5_explanation/01_explanation_fewshot_train.py",
+    # "5_explanation/02_explanation_fewshot_dev.py",
+    # # 6. Cloze
+    # # "6_cloze.py/01_cloze_zero_dev.py",
+    # # "6_cloze.py/02_cloze_fewshot_train.py",
+    # # "6_cloze.py/03_cloze_fewshot_dev.py",
 ]
 
 # ------------------ Run Scripts ------------------
