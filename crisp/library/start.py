@@ -19,8 +19,9 @@ if USER == "Claudia":
     CODE_DIR = "add/path/to/crisp/crisp/repo/"
     ONEDRIVE = "add/path/to/OneDrive/"
 if USER == "HPC":
-    CODE_DIR = "add/path/to/crisp/crisp/repo/"
-    ONEDRIVE = "add/path/to/OneDrive/"
+    import os
+    CODE_DIR = os.getcwd() + "/crisp/crisp" # don't clone crisp repo in a subfolder on hpc
+    ONEDRIVE = os.getcwd() + "/crisp/crisp/hpc/"
 
 MAIN_DIR = ONEDRIVE + "crisp/"
 DATA_DIR = MAIN_DIR + "data/"
