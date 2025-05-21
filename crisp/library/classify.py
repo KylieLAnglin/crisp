@@ -13,12 +13,18 @@ from openpyxl import Workbook, load_workbook
 from langchain_ollama import OllamaLLM
 
 
-from crisp.library import secrets, start
-from . import metric_standard_errors
+from crisp.library import secrets, start, metric_standard_errors
 
 # ------------------ CLIENT ------------------
+# gpt
 OPENAI_API_KEY = secrets.OPENAI_API_KEY
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+# llama
+ollama_server_url = "http://localhost:11434"
+
+#input = [{"role": "user", "content": text_to_classify}]
+#response = llm.invoke(input)
 
 
 # ------------------ PROMPT FORMATTING ------------------
@@ -53,19 +59,25 @@ def format_message_and_get_response(
         return cleaned_response, response.system_fingerprint
 
     elif model_provider == "llama":
-        # Placeholder: add llama integration
-        return "llama_fake_response", "llama_fingerprint"
+        messages = [{"role": "user", "content": prompt + text_to_classify}]
+        llm = OllamaLLM(
+            model = start.MODEL, 
+            base_url = ollama_server_url, 
+            temperature = temperature,
+            num_predict = 5,
+            seed = start.SEED)
+        response = llm.invoke(messages)
+        if response.isdigit() is False:
+            numbers = []
+            for character in response:
+                if character.isdigit() is True:
+                    number = int(character)
+                    number = numbers.append(number)
+            cleaned_response = numbers[0]
+        return cleaned_response, "fingerprint n/a"
 
     else:
         raise ValueError(f"Unsupported model provider: {model_provider}")
-
-# llama
-
-ollama_server_url = "http://localhost:11434"
-llm = OllamaLLM(model = start.MODEL, base_url = ollama_server_url)
-
-#input = [{"role": "user", "content": text_to_classify}]
-#response = llm.invoke(input)
 
 
 def create_binary_classification_from_response(response):
