@@ -59,12 +59,12 @@ def format_message_and_get_response(
         return cleaned_response, response.system_fingerprint
 
     elif model_provider == "llama":
-        messages = prompt + [{"role": "user", "content": text_to_classify + "add formatting instructions"}]
+        messages = prompt + [{"role": "user", "content": text_to_classify + "Your response must begin with either yes or no"}]
         llm = OllamaLLM(
             model = start.MODEL, 
             base_url = ollama_server_url, 
             temperature = temperature,
-            num_predict = 20,
+            num_predict = 10,
             seed = start.SEED)
         response = llm.invoke(messages)
         return response, "fingerprint n/a"
