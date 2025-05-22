@@ -1,5 +1,6 @@
 # data
 **/data
+!crisp/8_hpc/data/
 
 # Mac OS System Files
 .DS_Store
