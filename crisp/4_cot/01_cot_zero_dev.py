@@ -70,7 +70,10 @@ if SAMPLE:
 # ------------------ EVALUATE ------------------
 all_rows = []
 for row in tqdm(
-    prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating CoT Prompts"
+    prompt_df.itertuples(),
+    total=len(prompt_df),
+    desc="Evaluating CoT Prompts",
+    position=1,
 ):
     rows = classify.evaluate_prompt(
         prompt_text=row.prompt,

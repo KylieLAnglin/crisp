@@ -51,8 +51,8 @@ def format_message_and_get_response(
         cleaned_response = response.choices[0].message.content
         return cleaned_response, response.system_fingerprint
 
-    elif model_provider == "llama":
-        # Placeholder: add llama integration
+    elif model_provider == "gemma":
+        # Placeholder: add gemma integration
         return "llama_fake_response", "llama_fingerprint"
 
     else:
@@ -88,6 +88,7 @@ def evaluate_prompt(
         zip(df.text, df.participant_id, df.study, df.question, df.human_code),
         total=len(df),
         desc=f"Prompt ID: {prompt_id}",
+        position=0,
     ):
         timestamp = datetime.now().isoformat()
         cleaned_response, system_fingerprint = format_message_and_get_response(
