@@ -2,8 +2,7 @@
 import pandas as pd
 from tqdm import tqdm
 
-from crisp.library import start
-from crisp.library import classify
+from crisp.library import start, classify
 
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
