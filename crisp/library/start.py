@@ -1,10 +1,10 @@
 # ------------------ UPDATE HERE ------------------
 # USER = "Kylie", "Brittney", "Claudia", "HPC"
-# PLATFORM = "openai", "llama"
+# PLATFORM = "openai", "llama3.2", "llama3.3", "llama4"
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
 USER = "Brittney"
-PLATFORM = "llama"
+PLATFORM = "llama3.2"
 CONCEPT = "mm"
 SAMPLE = False
 
@@ -32,8 +32,12 @@ RAW_DIR = ONEDRIVE + "Materials for LLM/"
 # ------------------ MODEL ------------------
 if PLATFORM == "openai":
     MODEL = "gpt-4.1-2025-04-14"
-elif PLATFORM == "llama":
-    MODEL = "llama3.2"
+elif PLATFORM == "llama3.2":
+    MODEL = "llama3.2:latest"
+elif PLATFORM == "llama3.3":
+    MODEL = "llama3.3:latest"
+elif PLATFORM == "llama4":
+    MODEL = "llama4:maverick"
 
 # ------------------ OTHERS ------------------
 SEED = 123
