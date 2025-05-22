@@ -32,21 +32,6 @@ cd ../../scratch/PI_netID/PI_netID/crisp
 # load python version
 module load python/3.12.5
 
-# build container in scratch or shared - need more space for the larger model
-# scratch and shared are only accessible via pi
-# pi needs to give permission
-cd ../.. 
-# make a folder to save container
-mkdir /scratch/$USER-collab
-# list info for files
-# user = pi, needs to be done on pi's end
-getfacl scratch/$USER-collab
-
-chmod go-rwx /scratch/$USER-collab/
-setfacl -m "u:partner's_netid:rwx" /scratch/$USER-collab/
-setfacl -dm "u:partner's_netid:rwx" /scratch/$USER-collab/
-setfacl -dm "u:$USER-collab:rwx" /scratch/$USER-collab/
-
 # apptainer guide: https://apptainer.org/docs/user/main/cli.html
 # build the container
 apptainer build --force --docker-login --sandbox ollama/ docker://ollama/ollama:latest
@@ -69,7 +54,6 @@ apptainer exec instance://ollama_instance ollama pull llama3.3
 apptainer exec instance://ollama_instance ollama pull llama4
 apptainer exec instance://ollama_instance ollama pull gemma3:12b
 
-<<<<<<< HEAD
 # BEFORE CREATING THE ENVRIONMENT
 cd home/$USER/crisp/
 
@@ -77,10 +61,6 @@ cd home/$USER/crisp/
 # create a virtual environment for running the python scripts
 python3 -m venv .venv
 
-=======
-# create a virtual environment for running the python scripts
-python3 -m venv llama4_env
->>>>>>> aaf310c7ffb1d8dda81a5f5ad17dfc31f2b8ac3c
 # activate the envrionment
 source .venv/bin/activate
 
@@ -98,12 +78,15 @@ python3 crisp/1_baseline_prompt/00_baseline_prep.py
 # pi needs to give permission
 cd ../.. 
 # make a folder to save container
-mkdir /scratch/$USER-collab
+mkdir scratch/$USER/$USER/crisp/
+
 # list info for files
 # user = pi, needs to be done on pi's end
-getfacl scratch/$USER-collab
+getfacl crisp/
 
-chmod go-rwx /scratch/$USER-collab/
-setfacl -m "u:partner's_netid:rwx" /scratch/$USER-collab/
-setfacl -dm "u:partner's_netid:rwx" /scratch/$USER-collab/
-setfacl -dm "u:$USER-collab:rwx" /scratch/$USER-collab/
+cd scratch/$USER/$USER/crisp/
+
+chmod go-rwx crisp/
+setfacl -m "u:partner's_netid:rwx" crisp/
+setfacl -dm "u:partner's_netid:rwx" crisp/
+setfacl -dm "u:$USER:rwx" crisp/
