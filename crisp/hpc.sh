@@ -29,6 +29,23 @@ srun --partition=general-gpu --mem=64G --pty bash
 hostname
 
 cd ../../scratch/PI_netID/PI_netID/crisp
+# load python version
+module load python/3.12.5
+
+# build container in scratch or shared - need more space for the larger model
+# scratch and shared are only accessible via pi
+# pi needs to give permission
+cd ../.. 
+# make a folder to save container
+mkdir /scratch/$USER-collab
+# list info for files
+# user = pi, needs to be done on pi's end
+getfacl scratch/$USER-collab
+
+chmod go-rwx /scratch/$USER-collab/
+setfacl -m "u:partner's_netid:rwx" /scratch/$USER-collab/
+setfacl -dm "u:partner's_netid:rwx" /scratch/$USER-collab/
+setfacl -dm "u:$USER-collab:rwx" /scratch/$USER-collab/
 
 # apptainer guide: https://apptainer.org/docs/user/main/cli.html
 # build the container
@@ -52,6 +69,7 @@ apptainer exec instance://ollama_instance ollama pull llama3.3
 apptainer exec instance://ollama_instance ollama pull llama4
 apptainer exec instance://ollama_instance ollama pull gemma3:12b
 
+<<<<<<< HEAD
 # BEFORE CREATING THE ENVRIONMENT
 cd home/$USER/crisp/
 
@@ -59,6 +77,10 @@ cd home/$USER/crisp/
 # create a virtual environment for running the python scripts
 python3 -m venv .venv
 
+=======
+# create a virtual environment for running the python scripts
+python3 -m venv llama4_env
+>>>>>>> aaf310c7ffb1d8dda81a5f5ad17dfc31f2b8ac3c
 # activate the envrionment
 source .venv/bin/activate
 
@@ -66,10 +88,6 @@ source .venv/bin/activate
 pip3 install -r requirements.txt
 # install own packages to the virtual environment
 pip3 install -e .
-
-# fix error with crisp package load
-export PYTHONPATH=/home/$USER/crisp:$PYTHONPATH
-
 # run the script
 python3 crisp/1_baseline_prompt/00_baseline_prep.py 
 
