@@ -102,6 +102,7 @@ def evaluate_prompt(
         zip(df.text, df.participant_id, df.study, df.question, df.human_code),
         total=len(df),
         desc=f"Prompt ID: {prompt_id}",
+        position=1,
     ):
         timestamp = datetime.now().isoformat()
         cleaned_response, system_fingerprint = format_message_and_get_response(

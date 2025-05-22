@@ -39,7 +39,7 @@ prompt_df["prompt_id"] = prompt_df.index
 # ------------------ COLLECT RESPONSES ------------------
 response_rows = []
 for row in tqdm(
-    prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts"
+    prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts", position=0
 ):
     prompt_text = row.prompt
     prompt_id = row.prompt_id
