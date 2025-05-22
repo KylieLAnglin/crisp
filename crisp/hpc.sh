@@ -30,7 +30,7 @@ hostname
 
 cd ../../scratch/PI_netID/PI_netID/crisp
 # load python version
-module load python/3.12.5
+module load python/3.12.2
 
 # apptainer guide: https://apptainer.org/docs/user/main/cli.html
 # build the container
@@ -68,6 +68,8 @@ source .venv/bin/activate
 pip3 install -r requirements.txt
 # install own packages to the virtual environment
 pip3 install -e .
+# fix error with crisp package load
+export PYTHONPATH=/home/$USER/crisp:$PYTHONPATH
 # run the script
 python3 crisp/1_baseline_prompt/00_baseline_prep.py 
 
