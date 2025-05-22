@@ -21,7 +21,7 @@ ls
 
 # request a job
 # hardware recs for llama 4 from: https://bizon-tech.com/blog/llama-4-system-gpu-requirements-running-locally?srsltid=AfmBOoow2UfYJfu-93BJbFUeOuIV0OcdENqt_HmxJQnMd6jtbYoEGQOZ
-srun -n 1 --mem=64G --pty bash
+srun --partition=general-gpu --mem=64G --pty bash
 hostname
 
 # load python version
