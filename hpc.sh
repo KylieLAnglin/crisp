@@ -34,7 +34,6 @@ module load python/3.12.5
 # build container in scratch or shared - need more space for the larger model
 # scratch and shared are only accessible via pi
 # pi needs to give permission
-
 cd ../.. 
 # make a folder to save container
 mkdir /scratch/$USER-collab
