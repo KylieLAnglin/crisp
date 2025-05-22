@@ -62,7 +62,8 @@ def format_message_and_get_response(
         messages = prompt + [
             {
                 "role": "user",
-                "content": text_to_classify + "add formatting instructions",
+                "content": text_to_classify
+                + "\n\nYour response must begin with either Yes or No\n Response:",
             }
         ]
         llm = OllamaLLM(
