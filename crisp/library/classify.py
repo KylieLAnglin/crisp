@@ -23,8 +23,8 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # llama
 ollama_server_url = "http://localhost:11434"
 
-#input = [{"role": "user", "content": text_to_classify}]
-#response = llm.invoke(input)
+# input = [{"role": "user", "content": text_to_classify}]
+# response = llm.invoke(input)
 
 
 # ------------------ PROMPT FORMATTING ------------------
@@ -58,14 +58,20 @@ def format_message_and_get_response(
         cleaned_response = response.choices[0].message.content
         return cleaned_response, response.system_fingerprint
 
-    elif model_provider == "llama":
-        messages = prompt + [{"role": "user", "content": text_to_classify + "add formatting instructions"}]
+    elif model_provider == "llama3.3":
+        messages = prompt + [
+            {
+                "role": "user",
+                "content": text_to_classify + "add formatting instructions",
+            }
+        ]
         llm = OllamaLLM(
-            model = start.MODEL, 
-            base_url = ollama_server_url, 
-            temperature = temperature,
-            num_predict = 20,
-            seed = start.SEED)
+            model=start.MODEL,
+            base_url=ollama_server_url,
+            temperature=temperature,
+            num_predict=20,
+            seed=start.SEED,
+        )
         response = llm.invoke(messages)
         return response, "fingerprint n/a"
 
