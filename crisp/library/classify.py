@@ -59,7 +59,7 @@ def format_message_and_get_response(
         return cleaned_response, response.system_fingerprint
 
     elif model_provider == "llama":
-        messages = prompt + [{"role": "user", "content": text_to_classify}]
+        messages = prompt + [{"role": "user", "content": text_to_classify + "add formatting instructions"}]
         llm = OllamaLLM(
             model = start.MODEL, 
             base_url = ollama_server_url, 
