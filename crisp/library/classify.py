@@ -67,14 +67,7 @@ def format_message_and_get_response(
             num_predict = 20,
             seed = start.SEED)
         response = llm.invoke(messages)
-        if response.isdigit() is False:
-            numbers = []
-            for character in response:
-                if character.isdigit() is True:
-                    number = int(character)
-                    number = numbers.append(number)
-            cleaned_response = numbers[0]
-        return cleaned_response, "fingerprint n/a"
+        return response, "fingerprint n/a"
 
     else:
         raise ValueError(f"Unsupported model provider: {model_provider}")
