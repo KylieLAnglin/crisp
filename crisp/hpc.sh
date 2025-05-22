@@ -28,23 +28,7 @@ ls
 srun --partition=general-gpu --mem=64G --pty bash
 hostname
 
-# load python version
-module load python/3.12.2
-
-# build container in scratch or shared - need more space for the larger model
-# scratch and shared are only accessible via pi
-# pi needs to give permission
-cd ../.. 
-# make a folder to save container
-mkdir /scratch/$USER-collab
-# list info for files
-# user = pi, needs to be done on pi's end
-getfacl scratch/$USER-collab
-
-chmod go-rwx /scratch/$USER-collab/
-setfacl -m "u:partner's_netid:rwx" /scratch/$USER-collab/
-setfacl -dm "u:partner's_netid:rwx" /scratch/$USER-collab/
-setfacl -dm "u:$USER-collab:rwx" /scratch/$USER-collab/
+cd ../../scratch/PI_netID/PI_netID/crisp
 
 # apptainer guide: https://apptainer.org/docs/user/main/cli.html
 # build the container
@@ -60,18 +44,23 @@ ssh -Y netid@hpc2.storrs.hpc.uconn.edu
 # go to running node
 ssh node
 
+# load python version
+module load python/3.12.2
+
 # download model
 apptainer exec instance://ollama_instance ollama pull llama3.3
-apptainer exec instance://ollama_instance ollama pull llama3.4
+apptainer exec instance://ollama_instance ollama pull llama4
+apptainer exec instance://ollama_instance ollama pull gemma3:12b
 
 # BEFORE CREATING THE ENVRIONMENT
-cd 
+cd home/$USER/crisp/
 
+# skip if the virtual environment is already created
 # create a virtual environment for running the python scripts
-python3 -m venv llama4_env
+python3 -m venv .venv
 
 # activate the envrionment
-source llama4_env/bin/activate
+source .venv/bin/activate
 
 # install python packages to the virtual environment
 pip3 install -r requirements.txt
@@ -83,3 +72,20 @@ export PYTHONPATH=/home/$USER/crisp:$PYTHONPATH
 
 # run the script
 python3 crisp/1_baseline_prompt/00_baseline_prep.py 
+
+
+# _____________ sharing directory _____________
+# build container in scratch or shared - need more space for the larger model
+# scratch and shared are only accessible via pi
+# pi needs to give permission
+cd ../.. 
+# make a folder to save container
+mkdir /scratch/$USER-collab
+# list info for files
+# user = pi, needs to be done on pi's end
+getfacl scratch/$USER-collab
+
+chmod go-rwx /scratch/$USER-collab/
+setfacl -m "u:partner's_netid:rwx" /scratch/$USER-collab/
+setfacl -dm "u:partner's_netid:rwx" /scratch/$USER-collab/
+setfacl -dm "u:$USER-collab:rwx" /scratch/$USER-collab/
