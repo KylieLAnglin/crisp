@@ -21,7 +21,7 @@ elif USER == "Claudia":
 elif USER == "HPC":
     import os
     CODE_DIR = os.getcwd() + "/crisp/" # don't clone crisp repo in a subfolder on hpc
-    ONEDRIVE = os.getcwd() + "/crisp/hpc/"
+    ONEDRIVE = os.getcwd() + "/crisp/8_hpc/"
 
 MAIN_DIR = ONEDRIVE
 DATA_DIR = MAIN_DIR + "data/"
