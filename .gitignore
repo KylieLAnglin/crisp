@@ -26,3 +26,6 @@
 *.xml
 *.iml
 crisp/library/secrets.py
+
+# hpc script
+hpc_bah.sh
