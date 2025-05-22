@@ -34,9 +34,9 @@ script_paths = [
     "3_persona/02_persona_dev.py",
     "3_persona/03_persona_fewshot_dev.py",
     # # 4. Chain of Thought - Zero
-    # "4_cot/01_cot_zero_dev.py",
-    # "4_cot/02_cot_fewshot_train.py",
-    # "4_cot/03_cot_fewshot_dev.py",
+    "4_zero_shot_cot/01_cot_zero_dev.py",
+    # "4_zero_shot_cot/02_cot_fewshot_train.py",
+    # "4_zero_shot_cot/03_cot_fewshot_dev.py",
     # # 5. Explaination
     # "5_explanation/01_explanation_fewshot_train.py",
     # "5_explanation/02_explanation_fewshot_dev.py",

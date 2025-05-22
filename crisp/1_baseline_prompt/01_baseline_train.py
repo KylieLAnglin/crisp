@@ -38,8 +38,6 @@ if SAMPLE:
 # ------------------ LOAD PROMPTS ------------------
 prompt_df = pd.read_excel(PROMPT_PATH, sheet_name="baseline")
 prompt_df["prompt_id"] = prompt_df.index
-if SAMPLE:
-    prompt_df = prompt_df.sample(5, random_state=SEED)
 # ------------------ COLLECT RESPONSES ------------------
 response_rows = []
 for row in tqdm(
