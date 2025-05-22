@@ -31,6 +31,22 @@ hostname
 # load python version
 module load python/3.12.5
 
+# build container in scratch or shared - need more space for the larger model
+# scratch and shared are only accessible via pi
+# pi needs to give permission
+
+cd ../.. 
+# make a folder to save container
+mkdir /scratch/$USER-collab
+# list info for files
+# user = pi, needs to be done on pi's end
+getfacl scratch/$USER-collab
+
+chmod go-rwx /scratch/$USER-collab/
+setfacl -m "u:partner's_netid:rwx" /scratch/$USER-collab/
+setfacl -dm "u:partner's_netid:rwx" /scratch/$USER-collab/
+setfacl -dm "u:$USER-collab:rwx" /scratch/$USER-collab/
+
 # apptainer guide: https://apptainer.org/docs/user/main/cli.html
 # build the container
 apptainer build --force --docker-login --sandbox ollama/ docker://ollama/ollama:latest
