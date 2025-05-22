@@ -4,7 +4,7 @@
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
 USER = "HPC"
-PLATFORM = "llama3.3"
+PLATFORM = "gemma3.12"
 CONCEPT = "ncb"
 SAMPLE = False
 
