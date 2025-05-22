@@ -29,7 +29,7 @@ srun --partition=general-gpu --mem=64G --pty bash
 hostname
 
 # load python version
-module load python/3.12.5
+module load python/3.12.2
 
 # build container in scratch or shared - need more space for the larger model
 # scratch and shared are only accessible via pi
@@ -64,8 +64,12 @@ ssh node
 apptainer exec instance://ollama_instance ollama pull llama3.3
 apptainer exec instance://ollama_instance ollama pull llama3.4
 
+# BEFORE CREATING THE ENVRIONMENT
+cd 
+
 # create a virtual environment for running the python scripts
 python3 -m venv llama4_env
+
 # activate the envrionment
 source llama4_env/bin/activate
 
@@ -73,5 +77,9 @@ source llama4_env/bin/activate
 pip3 install -r requirements.txt
 # install own packages to the virtual environment
 pip3 install -e .
+
+# fix error with crisp package load
+export PYTHONPATH=/home/$USER/crisp:$PYTHONPATH
+
 # run the script
 python3 crisp/1_baseline_prompt/00_baseline_prep.py 
