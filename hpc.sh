@@ -21,7 +21,7 @@ ls
 
 # upload files via filezilla
 # copy the following folders from onedrive/crisp/data/ to github/hpc/data/
-# clean, fewshot_examples, prompts
+# clean, fewshot_examples, prompts, temp
 
 # request a job
 # hardware recs for llama 4 from: https://bizon-tech.com/blog/llama-4-system-gpu-requirements-running-locally?srsltid=AfmBOoow2UfYJfu-93BJbFUeOuIV0OcdENqt_HmxJQnMd6jtbYoEGQOZ
