@@ -38,6 +38,8 @@ elif PLATFORM == "llama3.3":
     MODEL = "llama3.3:latest"
 elif PLATFORM == "llama4":
     MODEL = "llama4:maverick"
+elif PLATFORM == "gemma3.12":
+    MODEL = "gemma3:12b"
 
 # ------------------ OTHERS ------------------
 SEED = 123
