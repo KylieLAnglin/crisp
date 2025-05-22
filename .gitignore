@@ -29,3 +29,4 @@ crisp/library/secrets.py
 
 # hpc script
 hpc_bah.sh
+crisp/hpc kla.sh
