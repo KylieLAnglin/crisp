@@ -1,6 +1,6 @@
 # ------------------ UPDATE HERE ------------------
 # USER = "Kylie", "Brittney", "Claudia", "HPC"
-# PLATFORM = "openai", "llama3.2", "llama3.3", "llama4"
+# PLATFORM = "openai", "llama3.2", "llama3.3", "llama4", "gemma3.12"
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
 USER = "HPC"
