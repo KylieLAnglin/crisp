@@ -1,0 +1,22 @@
+# ollama.toml
+
+# Enable GPU acceleration if supported
+use_gpu = true
+
+# Set number of threads for processing (based on CPU cores available)
+num_threads = 32
+
+# Memory limit (in MB)
+memory_limit_mb = 130000
+
+# Enable model caching if supported
+enable_model_cache = true
+
+# Log level (reduce logging to improve speed slightly)
+log_level = "warn"
+
+# Model optimization settings (example settings)
+[model]
+  quantization = "int8"   # or "fp16" if int8 not supported
+  max_batch_size = 16
+  max_sequence_length = 2048
