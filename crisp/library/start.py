@@ -12,7 +12,7 @@ SAMPLE = False
 if USER == "Kylie":
     CODE_DIR = "/Users/kla21002/crisp/crisp/"
     ONEDRIVE = (
-        "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/crisp"
+        "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/crisp/"
     )
 elif USER == "Brittney":
     CODE_DIR = "/Users/brittneyhernandez/Documents/github/crisp/crisp/"
