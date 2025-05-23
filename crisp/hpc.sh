@@ -36,7 +36,7 @@ module load python/3.12.2
 # build the container
 apptainer build --force --docker-login --sandbox ollama/ docker://ollama/ollama:latest
 # start the container
-apptainer instance start ollama/ ollama_instance
+apptainer instance start --nv ollama/ ollama_instance
 # start ollama in the container
 apptainer exec instance://ollama_instance ollama serve
 
