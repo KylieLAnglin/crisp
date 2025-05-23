@@ -18,8 +18,8 @@ elif USER == "Brittney":
     CODE_DIR = "/Users/brittneyhernandez/Documents/github/crisp/crisp/"
     ONEDRIVE = "/Users/brittneyhernandez/Library/CloudStorage/OneDrive-UniversityofConnecticut/project crisp/Anglin, Kylie's files - crisp/"
 elif USER == "Claudia":
-    CODE_DIR = "C:/Users/Claudia/Documents/GitHub/crisp/crisp"
-    ONEDRIVE = "C:/Users/Claudia/OneDrive - University of Connecticut/Anglin, Kylie's files - crisp"
+    CODE_DIR = "C:/Users/Claudia/Documents/GitHub/crisp/crisp/"
+    ONEDRIVE = "C:/Users/Claudia/OneDrive - University of Connecticut/Anglin, Kylie's files - crisp/"
 elif USER == "HPC":
     import os
 
