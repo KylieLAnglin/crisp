@@ -56,8 +56,26 @@ def format_message_and_get_response(
         )
         cleaned_response = response.choices[0].message.content
         return cleaned_response, response.system_fingerprint
+    
+    elif "gemma" in model_provider:
+        messages = prompt + [
+            {
+                "role": "user",
+                "content": text_to_classify
+                + "\n\nYour response must begin with either Yes or No\n Response:",
+            }
+        ]
+        llm = OllamaLLM(
+            model=start.MODEL,
+            base_url=ollama_server_url,
+            temperature=temperature,
+            num_predict=20,
+            seed=start.SEED,
+        )
+        response = llm.invoke(messages)
+        return response, "fingerprint n/a"
 
-    elif model_provider == "llama3.3":
+    elif "llama" in model_provider:
         messages = prompt + [
             {
                 "role": "user",
