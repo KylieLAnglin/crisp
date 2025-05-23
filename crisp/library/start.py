@@ -4,16 +4,14 @@
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
 USER = "HPC"
-PLATFORM = "gemma3.12"
+PLATFORM = "llama3.2"
 CONCEPT = "ncb"
 SAMPLE = False
 
 # ------------------ PATHS ------------------
 if USER == "Kylie":
     CODE_DIR = "/Users/kla21002/crisp/crisp/"
-    ONEDRIVE = (
-        "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/crisp/"
-    )
+    ONEDRIVE = "/Users/kla21002/Library/CloudStorage/OneDrive-UniversityofConnecticut/crisp/"
 elif USER == "Brittney":
     CODE_DIR = "/Users/brittneyhernandez/Documents/github/crisp/crisp/"
     ONEDRIVE = "/Users/brittneyhernandez/Library/CloudStorage/OneDrive-UniversityofConnecticut/project crisp/Anglin, Kylie's files - crisp/"
@@ -28,7 +26,7 @@ elif USER == "HPC":
 MAIN_DIR = ONEDRIVE
 DATA_DIR = MAIN_DIR + "data/"
 RESULTS_DIR = MAIN_DIR + "results/"
-RAW_DIR = os.path.abspath(os.path.join(ONEDRIVE, os.pardir)) + "/Materials for LLM/"
+RAW_DIR = ONEDRIVE + "Materials for LLM/" # fix this path - look @ old path on main
 
 
 

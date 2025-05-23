@@ -9,13 +9,8 @@ import pandas as pd
 from tqdm import tqdm
 from crisp.library import start
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
-if start.PLATFORM == "ollama":
-    from langchain_ollama import OllamaLLM
-if start.PLATFORM == "openai":
-    from openai import OpenAI
-from openpyxl import Workbook, load_workbook
-
+from langchain_ollama import OllamaLLM
+from openai import OpenAI
 
 from crisp.library import secrets, start, metric_standard_errors
 
