@@ -12,21 +12,15 @@ set -e  # <-- Stop immediately if any command fails
 
 # Load Python and activate environment
 module load python/3.12.2
-source /scratch/kla21002/kla21002/crisp/ollama_env_2025_05_22/bin/activate
-export PYTHONPATH=/home/kla21002/crisp:$PYTHONPATH
-
-cd /home/kla21002/crisp
+source /scratch/kla21002/kla21002/ollama_env_2025_05_22/bin/activate
+export PYTHONPATH=/scratch/kla21002/kla21002/crisp:$PYTHONPATH
+cd /scratch/kla21002/kla21002/crisp
 
 # Run pipeline
-# echo "Starting baseline training..."
+echo "1_baseline_prompt"
 # python3 crisp/1_baseline_prompt/01_baseline_train.py
-
-echo "1_baseline_prompt 02"
 python3 crisp/1_baseline_prompt/02_baseline_dev.py
-echo "1_baseline_prompt 03"
 # python3 crisp/1_baseline_prompt/03_fewshot_train.py
-
-# echo "Starting APE training..."
-# python3 crisp/1_baseline_prompt/03_ape_training.py
+# python3 crisp/1_baseline_prompt/04_fewshot_dev.py
 
 echo "Pipeline complete."
