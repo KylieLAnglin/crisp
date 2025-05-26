@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=llama_pipeline
+#SBATCH --job-name=llama_pipeline_05_26_2025
 #SBATCH --partition=general-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G
@@ -18,13 +18,15 @@ export PYTHONPATH=/home/kla21002/crisp:$PYTHONPATH
 cd /home/kla21002/crisp
 
 # Run pipeline
-echo "Starting baseline training..."
-python3 crisp/1_baseline_prompt/01_baseline_train.py
+# echo "Starting baseline training..."
+# python3 crisp/1_baseline_prompt/01_baseline_train.py
 
-echo "Starting dev evaluation..."
+echo "1_baseline_prompt 02"
 python3 crisp/1_baseline_prompt/02_baseline_dev.py
+echo "1_baseline_prompt 03"
+# python3 crisp/1_baseline_prompt/03_fewshot_train.py
 
-echo "Starting APE training..."
-python3 crisp/1_baseline_prompt/03_ape_training.py
+# echo "Starting APE training..."
+# python3 crisp/1_baseline_prompt/03_ape_training.py
 
 echo "Pipeline complete."
