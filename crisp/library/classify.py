@@ -10,7 +10,7 @@ from tqdm import tqdm
 from crisp.library import start
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-if "ollama" in start.PLATFORM:
+if "llama" in start.PLATFORM:
     from langchain_ollama import OllamaLLM
 if start.PLATFORM == "openai":
     from openai import OpenAI
