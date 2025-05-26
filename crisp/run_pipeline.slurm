@@ -27,8 +27,8 @@ sleep 5
 # Run pipeline
 echo "1_baseline_prompt"
 # python3 crisp/1_baseline_prompt/01_baseline_train.py
-# python3 crisp/1_baseline_prompt/02_baseline_dev.py
-python3 crisp/1_baseline_prompt/03_fewshot_train.py
+python3 crisp/1_baseline_prompt/02_baseline_dev.py
+# python3 crisp/1_baseline_prompt/03_fewshot_train.py
 # python3 crisp/1_baseline_prompt/04_fewshot_dev.py
 
 echo "Pipeline is now complete."
