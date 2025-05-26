@@ -189,9 +189,17 @@ def generate_prompt_variants(
             )
             new_prompt = response.choices[0].message.content.strip()
 
-        elif model_provider == "llama":
-            # Placeholder for llama support
-            new_prompt = "llama_fake_response"
+        elif model_provider.startswith("llama"):
+            llm = OllamaLLM(
+                model=start.MODEL,
+                base_url="http://localhost:11434",
+                temperature=1,
+                seed=start.SEED,
+            )
+            new_prompt = llm.invoke(meta_instructions)
+
+        else:
+            raise ValueError(f"Unsupported model provider: {model_provider}")
 
         variants.append(new_prompt)
 

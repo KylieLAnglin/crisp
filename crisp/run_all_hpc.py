@@ -9,7 +9,7 @@ print(
 
 # ------------------ Change to Project Directory ------------------
 
-os.chdir(start.CODE_DIR)
+os.chdir("/scratch/kla21002/kla21002/crisp/")
 print("Current working directory:", os.getcwd())
 
 # ------------------ Define Scripts ------------------
