@@ -14,6 +14,9 @@ if start.PLATFORM == "ollama":
     from langchain_ollama import OllamaLLM
 if start.PLATFORM == "openai":
     from openai import OpenAI
+
+    OPENAI_API_KEY = secrets.OPENAI_API_KEY
+    client = OpenAI(api_key=OPENAI_API_KEY)
 from openpyxl import Workbook, load_workbook
 
 
@@ -21,8 +24,7 @@ from crisp.library import secrets, start, metric_standard_errors
 
 # ------------------ CLIENT ------------------
 # gpt
-OPENAI_API_KEY = secrets.OPENAI_API_KEY
-client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 # llama
 ollama_server_url = "http://localhost:11434"
