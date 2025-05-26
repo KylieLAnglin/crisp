@@ -23,4 +23,4 @@ python3 crisp/1_baseline_prompt/02_baseline_dev.py
 # python3 crisp/1_baseline_prompt/03_fewshot_train.py
 # python3 crisp/1_baseline_prompt/04_fewshot_dev.py
 
-echo "Pipeline complete."
+echo "Pipeline is now complete."
