@@ -16,6 +16,14 @@ source /scratch/kla21002/kla21002/ollama_env_2025_05_22/bin/activate
 export PYTHONPATH=/scratch/kla21002/kla21002/crisp:$PYTHONPATH
 cd /scratch/kla21002/kla21002/crisp
 
+# Start Ollama instance (if needed)
+apptainer instance start --nv /scratch/kla21002/kla21002/ollama ollama_instance
+
+# Start the Ollama server in the background
+apptainer exec instance://ollama_instance ollama serve &
+# Wait for the server to start
+sleep 5
+
 # Run pipeline
 echo "1_baseline_prompt"
 # python3 crisp/1_baseline_prompt/01_baseline_train.py
