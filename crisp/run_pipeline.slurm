@@ -14,7 +14,7 @@ set -e  # <-- Stop immediately if any command fails
 module load python/3.12.2
 source /scratch/kla21002/kla21002/ollama_env_2025_05_22/bin/activate
 export PYTHONPATH=/scratch/kla21002/kla21002/crisp:$PYTHONPATH
-cd /scratch/kla21002/kla21002/crisp
+# cd /scratch/kla21002/kla21002/crisp # This is where you need to be
 
 # Start Ollama instance (if needed)
 apptainer instance start --nv /scratch/kla21002/kla21002/ollama ollama_instance
@@ -27,8 +27,10 @@ sleep 5
 # Run pipeline
 echo "1_baseline_prompt"
 # python3 crisp/1_baseline_prompt/01_baseline_train.py
-python3 crisp/1_baseline_prompt/02_baseline_dev.py
+# python3 crisp/1_baseline_prompt/02_baseline_dev.py
 # python3 crisp/1_baseline_prompt/03_fewshot_train.py
 # python3 crisp/1_baseline_prompt/04_fewshot_dev.py
+python3 /scratch/kla21002/kla21002/crisp/2_APE/03_APE_fewshot_train.py
+python3 /scratch/kla21002/kla21002/crisp/2_APE/04_APE_fewshot_dev.py
 
 echo "Pipeline is now complete."
