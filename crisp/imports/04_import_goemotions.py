@@ -68,4 +68,4 @@ remaining_train_mask = (df["split_group"] == "train") & (df["train_use"].isna())
 df.loc[remaining_train_mask, "train_use"] = "eval"
 
 # Save to Excel
-df.to_excel(start.DATA_DIR + f"clean/ps.xlsx", index=False)
+df.to_excel(start.DATA_DIR + f"clean/anger.xlsx", index=False)
