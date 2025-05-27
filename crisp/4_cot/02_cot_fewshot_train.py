@@ -97,6 +97,11 @@ bottom_examples = example_combinations.loc[
 pd.DataFrame(top_examples).to_excel(TEMP_TOP_PATH, index=False)
 pd.DataFrame(bottom_examples).to_excel(TEMP_BOTTOM_PATH, index=False)
 
+####
+# Break here.
+####
+
+stop  # remove stop when you've created the top and bottom examples excel files
 # ------------------ LOAD COT-LABELED EXAMPLES ------------------
 top_examples_cot_df = pd.read_excel(EXCEL_TOP_COT_PATH)
 bottom_examples_cot_df = pd.read_excel(EXCEL_BOTTOM_COT_PATH)
