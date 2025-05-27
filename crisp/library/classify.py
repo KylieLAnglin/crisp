@@ -76,7 +76,7 @@ def format_message_and_get_response(
             model=start.MODEL,
             base_url=ollama_server_url,
             temperature=temperature,
-            num_predict=20,
+            # num_predict=20,
             seed=start.SEED,
         )
         response = llm.invoke(messages)
