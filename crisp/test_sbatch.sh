@@ -28,3 +28,34 @@ apptainer exec instance://ollama_instance ollama serve &
 echo "🕒 Waiting for Ollama server to become ready..."
 sleep 10
 apptainer exec instance://ollama_instance ollama run llama3 "Is the following a negative core belief? Respond with only Yes or No. Text: I am worthless."
+
+
+# ------------------ RUN PIPELINE ------------------
+run_step() {
+    SCRIPT=$1
+    echo -e "\n📄 Running: $SCRIPT at $(date)\n------------------------------------------------------------"
+    python3 "$SCRIPT"
+    echo -e "\n✅ Completed: $SCRIPT at $(date)"
+}
+
+echo -e "\n🏃 [3/5] Running classification pipeline...\n"
+
+run_step crisp/1_baseline_prompt/01_baseline_train.py
+run_step crisp/1_baseline_prompt/02_baseline_dev.py
+# run_step crisp/1_baseline_prompt/03_fewshot_train.py
+# run_step crisp/1_baseline_prompt/04_fewshot_dev.py
+# run_step crisp/2_APE/01_ape_train.py
+# run_step crisp/2_APE/02_ape_dev.py
+# run_step crisp/2_APE/03_APE_fewshot_train.py
+# run_step crisp/2_APE/04_APE_fewshot_dev.py
+# run_step crisp/3_persona/01_persona_train.py
+# run_step crisp/3_persona/02_persona_dev.py
+# run_step crisp/3_persona/03_persona_fewshot_dev.py
+# run_step crisp/4_cot/01_cot_zero_dev.py
+# run_step crisp/4_cot/02_cot_fewshot_train.py
+# run_step crisp/4_cot/03_cot_fewshot_dev.py
+# run_step crisp/explanation/01_explanation_fewshot_train.py
+# run_step crisp/explanation/02_explanation_fewshot_dev.py
+
+# ------------------ END ------------------
+echo -e "\n✅ [5/5] Pipeline complete at $(date)"
