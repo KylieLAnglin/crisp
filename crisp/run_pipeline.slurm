@@ -25,12 +25,12 @@ apptainer exec instance://ollama_instance ollama serve &
 sleep 5
 
 # Run pipeline
-echo "1_baseline_prompt"
+echo "APE"
 # python3 crisp/1_baseline_prompt/01_baseline_train.py
 # python3 crisp/1_baseline_prompt/02_baseline_dev.py
 # python3 crisp/1_baseline_prompt/03_fewshot_train.py
 # python3 crisp/1_baseline_prompt/04_fewshot_dev.py
-python3 /scratch/kla21002/kla21002/crisp/2_APE/03_APE_fewshot_train.py
-python3 /scratch/kla21002/kla21002/crisp/2_APE/04_APE_fewshot_dev.py
+python3 /scratch/kla21002/kla21002/crisp/crisp/2_APE/03_APE_fewshot_train.py
+python3 /scratch/kla21002/kla21002/crisp/crisp/2_APE/04_APE_fewshot_dev.py
 
 echo "Pipeline is now complete."
