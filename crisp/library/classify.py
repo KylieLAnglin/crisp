@@ -1,15 +1,32 @@
 # classify.py
 import os
+import sys
+import logging
 from datetime import datetime
-import os
 import json
 import random
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from crisp.library import start, secrets
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from openpyxl import Workbook, load_workbook
 
+from crisp.library import start, secrets, metric_standard_errors
+
+# ------------------ LOGGING SETUP ------------------
+LOG_PATH = start.MAIN_DIR + f"logs/{start.PLATFORM}_{start.CONCEPT}_classify.log"
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_PATH),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+
+# ------------------ CLIENT SETUP ------------------
 if "llama" in start.PLATFORM:
     from langchain_ollama import OllamaLLM
 if start.PLATFORM == "openai":
@@ -17,28 +34,12 @@ if start.PLATFORM == "openai":
 
     OPENAI_API_KEY = secrets.OPENAI_API_KEY
     client = OpenAI(api_key=OPENAI_API_KEY)
-from openpyxl import Workbook, load_workbook
 
-
-from crisp.library import secrets, start, metric_standard_errors
-
-# ------------------ CLIENT ------------------
-# gpt
-
-
-# llama
 ollama_server_url = "http://localhost:11434"
-
-# input = [{"role": "user", "content": text_to_classify}]
-# response = llm.invoke(input)
 
 
 # ------------------ PROMPT FORMATTING ------------------
 def format_system_message(text):
-    """
-    Formats a system message with the prompt text followed by 'Text:'.
-    Ensures consistency across classification calls.
-    """
     return {
         "role": "system",
         "content": text.strip() + " Text:",
@@ -49,47 +50,46 @@ def format_system_message(text):
 def format_message_and_get_response(
     model_provider, prompt, text_to_classify, temperature=0.0001
 ):
-    """
-    Send prompt + text to the model and return the response and fingerprint.
-    """
-    if model_provider == "openai":
-        messages = prompt + [{"role": "user", "content": text_to_classify}]
-        response = client.chat.completions.create(
-            model=start.MODEL,
-            messages=messages,
-            temperature=temperature,
-            n=1,
-            seed=start.SEED,
-        )
-        cleaned_response = response.choices[0].message.content
-        return cleaned_response, response.system_fingerprint
+    try:
+        if model_provider == "openai":
+            messages = prompt + [{"role": "user", "content": text_to_classify}]
+            response = client.chat.completions.create(
+                model=start.MODEL,
+                messages=messages,
+                temperature=temperature,
+                n=1,
+                seed=start.SEED,
+            )
+            cleaned_response = response.choices[0].message.content
+            return cleaned_response, response.system_fingerprint
 
-    elif model_provider == "llama3.3":
-        messages = prompt + [
-            {
-                "role": "user",
-                "content": text_to_classify
-                + "\n\nYour response must begin with either Yes or No\n Response:",
-            }
-        ]
-        llm = OllamaLLM(
-            model=start.MODEL,
-            base_url=ollama_server_url,
-            temperature=temperature,
-            num_predict=20,
-            seed=start.SEED,
-        )
-        response = llm.invoke(messages)
-        return response, "fingerprint n/a"
+        elif model_provider == "llama3.3":
+            messages = prompt + [
+                {
+                    "role": "user",
+                    "content": text_to_classify
+                    + "\n\nYour response must begin with either Yes or No\n Response:",
+                }
+            ]
+            llm = OllamaLLM(
+                model=start.MODEL,
+                base_url=ollama_server_url,
+                temperature=temperature,
+                num_predict=20,
+                seed=start.SEED,
+            )
+            response = llm.invoke(messages)
+            return response, "fingerprint n/a"
 
-    else:
-        raise ValueError(f"Unsupported model provider: {model_provider}")
+        else:
+            raise ValueError(f"Unsupported model provider: {model_provider}")
+
+    except Exception as e:
+        logging.error(f"Model response error: {e}")
+        return "ERROR", "N/A"
 
 
 def create_binary_classification_from_response(response):
-    """
-    Classifies response as 1 for 'yes', 0 for 'no', np.nan otherwise.
-    """
     response = response.lower()
     if "yes" in response:
         return 1
@@ -102,20 +102,19 @@ def create_binary_classification_from_response(response):
 def evaluate_prompt(
     prompt_text, prompt_id, df, platform, temperature=0.0001, parser_fn=None
 ):
-    """
-    Applies a prompt to classify a DataFrame of texts and returns a list of response rows.
-    Assumes binary classification and expects a 'text' and 'human_code' column in df.
-    Optionally accepts a custom parser function to override the default response parsing logic.
-    """
+    logging.info(f"Evaluating prompt ID {prompt_id}...")
     rows = []
     formatted_prompt = format_system_message(prompt_text)
     prompt_content = formatted_prompt["content"]
 
-    for text, participant_id, study, question, human_code in tqdm(
-        zip(df.text, df.participant_id, df.study, df.question, df.human_code),
-        total=len(df),
-        desc=f"Prompt ID: {prompt_id}",
-        position=1,
+    for i, (text, participant_id, study, question, human_code) in enumerate(
+        tqdm(
+            zip(df.text, df.participant_id, df.study, df.question, df.human_code),
+            total=len(df),
+            desc=f"Prompt {prompt_id}",
+            position=0,
+            leave=False,
+        )
     ):
         timestamp = datetime.now().isoformat()
         cleaned_response, system_fingerprint = format_message_and_get_response(
@@ -130,6 +129,11 @@ def evaluate_prompt(
         else:
             classification = create_binary_classification_from_response(
                 cleaned_response
+            )
+
+        if i % 10 == 0:
+            logging.debug(
+                f"Prompt ID {prompt_id}, row {i}: response='{cleaned_response}', classification={classification}"
             )
 
         rows.append(

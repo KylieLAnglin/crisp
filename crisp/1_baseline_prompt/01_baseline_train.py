@@ -1,4 +1,9 @@
 # 01_baseline_train.py
+import os
+import sys
+import logging
+from datetime import datetime
+
 import pandas as pd
 from tqdm import tqdm
 
@@ -6,14 +11,25 @@ from crisp.library import start, classify
 
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
-
 PLATFORM = start.PLATFORM
 MODEL = start.MODEL
-
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
-print(f"Running baseline {CONCEPT} on {PLATFORM} with {MODEL} in train set")
+# ------------------ LOGGING ------------------
+LOG_PATH = start.MAIN_DIR + f"logs/{PLATFORM}_{CONCEPT}_baseline_train.log"
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_PATH),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+
+logging.info(f"Starting baseline training for {CONCEPT} on {PLATFORM} with {MODEL}")
 
 # ------------------ PATHS ------------------
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
@@ -33,11 +49,16 @@ df = df[df.split_group == "train"]
 if SAMPLE:
     df = df.sample(5, random_state=SEED)
 
+logging.info("Loaded training data. Number of rows: %d", len(df))
+
 # ------------------ LOAD PROMPTS ------------------
 prompt_df = pd.read_excel(PROMPT_PATH, sheet_name="baseline")
 prompt_df["prompt_id"] = prompt_df.index
+logging.info("Loaded %d baseline prompts", len(prompt_df))
+
 # ------------------ COLLECT RESPONSES ------------------
 response_rows = []
+logging.info("Beginning prompt evaluation...")
 for row in tqdm(
     prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts", position=0
 ):
@@ -56,13 +77,16 @@ for row in tqdm(
 # ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(RESPONSE_PATH, index=False)
+logging.info(f"Saved raw responses to: {RESPONSE_PATH}")
 
 # ------------------ EXPORT RESULTS ------------------
 classify.export_results_to_excel(
     df=long_df,
     output_path=RESULTS_PATH,
-    group_col="prompt_id",  # updated
+    group_col="prompt_id",
     prompt_col="prompt",
     sheet_name="results",
     include_se=False,
 )
+logging.info(f"Saved metrics to: {RESULTS_PATH}")
+logging.info("Finished baseline training.")
