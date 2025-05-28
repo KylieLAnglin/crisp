@@ -3,9 +3,12 @@
 # PLATFORM = "openai", "llama3.2", "llama3.3", "llama4", "gemma3.12"
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
-USER = "HPC"
-PLATFORM = "llama3.3"
-CONCEPT = "ncb"
+import os
+USER = "Claudia"                  # "HPC"
+print(f"DEBUG: Using USER = {USER}")
+
+PLATFORM = "llama3.2"        # "gemma3.12"
+CONCEPT = "emotions"               # "ncb"
 SAMPLE = False
 
 # ------------------ PATHS ------------------
@@ -26,9 +29,13 @@ elif USER == "HPC":
 MAIN_DIR = ONEDRIVE
 DATA_DIR = MAIN_DIR + "data/"
 RESULTS_DIR = MAIN_DIR + "results/"
-RAW_DIR = ONEDRIVE + "Materials for LLM/" # fix this path - look @ old path on main
 
+if USER: # without this is using RAW_DIR even if USER is not set to HPC
+    RAW_DIR = os.path.abspath(os.path.join(ONEDRIVE, os.pardir)) + "/Materials for LLM/"
 
+print(f"DEBUG: MAIN_DIR = {MAIN_DIR}")
+print(f"DEBUG: DATA_DIR = {DATA_DIR}")
+print(f"DEBUG: RESULTS_DIR = {RESULTS_DIR}")
 
 # ------------------ MODEL ------------------
 if PLATFORM == "openai":
