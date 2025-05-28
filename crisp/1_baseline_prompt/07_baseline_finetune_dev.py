@@ -15,7 +15,7 @@ print(f"Running fine-tuned model eval on {CONCEPT} with {PLATFORM} in dev set")
 # ------------------ PATHS ------------------
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
 IMPORT_RESULTS_PATH = (
-    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_train.xlsx"
+    start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_baseline_zero_results_dev.xlsx"
 )
 MODEL_NAME_PATH = (
     start.DATA_DIR
@@ -60,10 +60,6 @@ for label in ["top", "bottom"]:
     prompt_text = prompt_map[label].replace("Text:", "").strip()
     model_name = model_map.get(label)
 
-    if pd.isna(model_name):
-        print(f"⚠️ Skipping {label} — no model name found.")
-        continue
-
     print(f"Evaluating {label} model: {model_name}")
 
     responses = classify.evaluate_prompt(
@@ -72,8 +68,6 @@ for label in ["top", "bottom"]:
         df=df,
         platform=PLATFORM,
         temperature=0.0,
-        model_override=model_name,
-        override_as_finetuned=True,  # Ensure classify.py supports this
     )
     response_rows.extend(responses)
 
