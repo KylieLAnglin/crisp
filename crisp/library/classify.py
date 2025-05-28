@@ -34,7 +34,7 @@ def format_system_message(text):
 
 # ------------------ RESPONSE FUNCTIONS ------------------
 def format_message_and_get_response(
-    model_provider, prompt, text_to_classify, temperature=0.0001
+    model_provider, prompt, text_to_classify, temperature=0.0001, response_length=20
 ):
     if model_provider == "openai":
         messages = prompt + [{"role": "user", "content": text_to_classify}]
@@ -60,7 +60,7 @@ def format_message_and_get_response(
             model=start.MODEL,
             base_url=ollama_server_url,
             temperature=temperature,
-            num_predict=20,
+            # num_predict = -1,
             seed=start.SEED,
         )
         response = llm.invoke(messages)
