@@ -3,9 +3,9 @@
 # PLATFORM = "openai", "llama3.2", "llama3.3", "llama4"
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
-USER = "HPC"
-PLATFORM = "llama3.3"
-CONCEPT = "mm"
+USER = "Kylie"
+PLATFORM = "openai"
+CONCEPT = "ncb"
 SAMPLE = False
 
 # ------------------ PATHS ------------------
