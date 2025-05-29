@@ -45,7 +45,9 @@ prompt_df["prompt"] = prompt_df["prompt"].str.replace("Text:", "", regex=False)
 
 # ------------------ GENERATE RESPONSES ------------------
 
-for row in tqdm(prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts"):
+for row in tqdm(
+    prompt_df.itertuples(), total=len(prompt_df), desc="Evaluating Prompts"
+):
     print(row)
     prompt_text = row.prompt
     prompt_id = row.prompt_id

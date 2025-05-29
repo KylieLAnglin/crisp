@@ -6,19 +6,19 @@ import numpy as np
 SEED = start.SEED
 np.random.seed(SEED)
 # %%
-df = pd.read_csv(start.DATA_DIR + "raw/Emotion_classify_Data.csv")
-# df = df.sample(575, random_state=SEED)
+df = pd.read_csv(start.DATA_DIR + "raw/goemotions_1.csv")
+df = df.rename(columns={"gratitude": "human_code"})
+# sample 600 rows, 300 must be gratitude, 300 must not be gratitude
+positive_df = df[df["human_code"] == 1].sample(300, random_state=SEED)
+negative_df = df[df["human_code"] == 0].sample(300, random_state=SEED)
+df = pd.concat([positive_df, negative_df], ignore_index=True)
 
 # %%
 # create the column human code
 # Assign human_code: 1 if emotion is 'gratitude', else 0
-df["human_code"] = (
-    df["Emotion"].str.lower().apply(lambda x: 1 if x == "gratitude" else 0)
-)  # not sure about this line of code
 df["construct"] = "gratitude"
 
-df = df.rename(columns={"Comment": "text"})
-df["participant_id"] = df.index + 1  # or use a real ID if available, do we need this?
+df["participant_id"] = df.id  # or use a real ID if available, do we need this?
 df["study"] = "emotion_classify"
 df["question"] = "emotion"
 df["unique_text_id"] = (

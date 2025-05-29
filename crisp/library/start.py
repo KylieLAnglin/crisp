@@ -3,8 +3,8 @@
 # PLATFORM = "openai", "llama3.2", "llama3.3", "llama4"
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
-USER = "Kylie"
-PLATFORM = "openai"
+USER = "HPC"
+PLATFORM = "llama3.3"
 CONCEPT = "ncb"
 SAMPLE = False
 

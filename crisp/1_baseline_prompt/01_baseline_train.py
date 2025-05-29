@@ -15,6 +15,8 @@ MODEL = start.MODEL
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
+print(f"Running baseline train on {CONCEPT} with {PLATFORM} {MODEL} in train set")
+
 
 # ------------------ PATHS ------------------
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
