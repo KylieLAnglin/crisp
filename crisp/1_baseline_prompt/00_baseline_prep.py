@@ -9,7 +9,7 @@ np.random.seed(start.SEED)
 
 CONCEPT = start.CONCEPT
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
-DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
+#DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx" #we dont need this for baseline prompts right?
 
 
 # ------------------ LOAD VARIANTS ------------------
@@ -39,3 +39,8 @@ with pd.ExcelWriter(
     PROMPT_PATH, mode="a", engine="openpyxl", if_sheet_exists="replace"
 ) as writer:
     prompt_df.to_excel(writer, sheet_name="baseline", index=False)
+    
+
+
+
+

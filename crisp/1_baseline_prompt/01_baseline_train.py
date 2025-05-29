@@ -28,7 +28,7 @@ RESULTS_PATH = (
 )
 
 # ------------------ LOAD DATA ------------------
-df = pd.read_excel(DATA_PATH)
+df = pd.read_excel(DATA_PATH,engine='openpyxl')
 df = df[df.split_group == "train"]
 if SAMPLE:
     df = df.sample(5, random_state=SEED)

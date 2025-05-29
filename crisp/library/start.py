@@ -8,7 +8,7 @@ USER = "Claudia"                  # "HPC"
 print(f"DEBUG: Using USER = {USER}")
 
 PLATFORM = "llama3.2"        # "gemma3.12"
-CONCEPT = "emotions"               # "ncb"
+CONCEPT = "anger"               # "ncb"
 SAMPLE = False
 
 # ------------------ PATHS ------------------

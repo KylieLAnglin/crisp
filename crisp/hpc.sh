@@ -75,6 +75,8 @@ export PYTHONPATH=/home/$USER/crisp:$PYTHONPATH
 # run the script
 python3 crisp/1_baseline_prompt/00_baseline_prep.py 
 
+#python3 crisp/1_baseline_prompt/01_baseline_train.py 
+
 
 # _____________ sharing directory _____________
 # build container in scratch or shared - need more space for the larger model
