@@ -5,7 +5,7 @@
 # SAMPLE = True, False
 USER = "HPC"
 PLATFORM = "llama3.3"
-CONCEPT = "mm"
+CONCEPT = "ncb"
 SAMPLE = False
 
 # ------------------ PATHS ------------------
