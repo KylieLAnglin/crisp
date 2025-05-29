@@ -3,10 +3,21 @@
 # PLATFORM = "openai", "llama3.2", "llama3.3", "llama4"
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
-USER = "HPC"
+USER = "Kylie"
 PLATFORM = "llama3.3"
-CONCEPT = "ncb"
+CONCEPT = "mm"
 SAMPLE = False
+
+
+# All combos of results
+# openai anger
+# openai ncb
+# openai mm
+
+# llama3.3 anger
+# llama3.3 ncb
+# llama3.3 mm
+
 
 # ------------------ PATHS ------------------
 if USER == "Kylie":

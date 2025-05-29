@@ -7,7 +7,7 @@ from crisp.library import start
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
-RESULTS_FILE = start.RESULTS_DIR + f"{PLATFORM}_{CONCEPT}_dev_table.xlsx"
+RESULTS_FILE = start.RESULTS_DIR + f"dev_table_{PLATFORM}_{CONCEPT}.xlsx"
 
 TECHNIQUES = ["Baseline", "APE", "Persona", "Chain-of-Thought", "Explanations", "Cloze"]
 RESULT_PATHS = {
@@ -31,10 +31,6 @@ RESULT_PATHS = {
     "Explanations": {
         "Zero-Shot": f"{PLATFORM}_{CONCEPT}_explanation_zero_results_dev.xlsx",
         "Few-Shot": f"{PLATFORM}_{CONCEPT}_explanation_few_results_dev.xlsx",
-    },
-    "Cloze": {
-        "Zero-Shot": f"{PLATFORM}_{CONCEPT}_cloze_zero_results_dev.xlsx",
-        "Few-Shot": f"{PLATFORM}_{CONCEPT}_cloze_few_results_dev.xlsx",
     },
 }
 # ------------------ SETUP WORKBOOK ------------------
@@ -160,6 +156,5 @@ for strategy in ["Zero-Shot", "Few-Shot"]:
             ws.cell(row=row + 1, column=col, value=f"({se:.2f})")
             row += 2
 
-# ------------------ WRITE ONLY BOTTOM ZERO-SHOT ------------------
 # ------------------ SAVE ------------------
 wb.save(RESULTS_FILE)
