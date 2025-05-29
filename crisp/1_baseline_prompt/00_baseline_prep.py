@@ -9,7 +9,7 @@ np.random.seed(start.SEED)
 
 CONCEPT = start.CONCEPT
 PROMPT_PATH = start.DATA_DIR + f"prompts/{CONCEPT}_baseline_variants.xlsx"
-#DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx" #we dont need this for baseline prompts right?
+DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx" #we dont need this for baseline prompts right?
 
 
 # ------------------ LOAD VARIANTS ------------------
