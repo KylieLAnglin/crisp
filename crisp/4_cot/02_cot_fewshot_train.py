@@ -8,7 +8,9 @@ import pandas as pd
 from tqdm import tqdm
 import random
 
-from crisp.library import start, classify
+from crisp.library import start
+
+from crisp.library import classify
 
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
@@ -101,7 +103,6 @@ pd.DataFrame(bottom_examples).to_excel(TEMP_BOTTOM_PATH, index=False)
 # Break here.
 ####
 
-stop  # remove stop when you've created the top and bottom examples excel files
 # ------------------ LOAD COT-LABELED EXAMPLES ------------------
 top_examples_cot_df = pd.read_excel(EXCEL_TOP_COT_PATH)
 bottom_examples_cot_df = pd.read_excel(EXCEL_BOTTOM_COT_PATH)

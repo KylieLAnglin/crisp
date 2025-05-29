@@ -5,7 +5,7 @@
 # SAMPLE = True, False
 USER = "Kylie"
 PLATFORM = "llama3.3"
-CONCEPT = "mm"
+CONCEPT = "ncb"
 SAMPLE = False
 
 
