@@ -6,22 +6,25 @@ import numpy as np
 SEED = start.SEED
 np.random.seed(SEED)
 # %%
-df = pd.read_csv(start.DATA_DIR + "raw/goodreads_train.csv")
-df = df[df.rating.isin([1, 2, 3, 4, 5])]
-df = df[df.review_text.str.len() > 20]
+df = pd.read_csv(start.DATA_DIR + "raw/Emotion_classify_Data.csv")
 df = df.sample(575, random_state=SEED)
 
 # %%
-df.rating.value_counts()
-df["human_code"] = df.rating.apply(lambda x: 1 if x >= 4 else 0)
-df["construct"] = "ps"  # positive sentiment
-df = df.rename(columns={"user_id": "participant_id", "review_text": "text"})
+# create the column human code
+# Assign human_code: 1 if emotion is 'anger', else 0
+df["human_code"] = (
+    df["Emotion"].str.lower().apply(lambda x: 1 if x == "anger" else 0)
+)  # not sure about this line of code
+df["construct"] = "anger"
 
-df["study"] = "goodreads"
-df["question"] = "review"
+df = df.rename(columns={"Comment": "text"})
+df["participant_id"] = df.index + 1  # or use a real ID if available, do we need this?
+df["study"] = "emotion_classify"
+df["question"] = "emotion"
 df["unique_text_id"] = (
     df["participant_id"].astype(str) + "_" + df["study"] + "_" + df["question"]
 )
+
 df = df[
     [
         "participant_id",
