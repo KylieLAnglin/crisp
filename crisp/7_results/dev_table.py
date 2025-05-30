@@ -7,6 +7,10 @@ from crisp.library import start
 # ------------------ SETUP ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = start.PLATFORM
+
+# CONCEPT = "gratitude"
+# PLATFORM = "openai"
+
 RESULTS_FILE = start.RESULTS_DIR + f"dev_table_{PLATFORM}_{CONCEPT}.xlsx"
 
 TECHNIQUES = ["Baseline", "APE", "Persona", "Chain-of-Thought", "Explanations", "Cloze"]
