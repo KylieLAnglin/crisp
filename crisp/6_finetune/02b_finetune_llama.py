@@ -10,8 +10,8 @@ from transformers import (
     TrainingArguments,
     Trainer,
     DataCollatorForLanguageModeling,
-    Callback,
 )
+from transformers.trainer_callback import Callback
 from peft import get_peft_model, LoraConfig, TaskType
 from crisp.library import start
 
