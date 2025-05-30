@@ -40,10 +40,6 @@ script_paths = [
     # # 5. Explaination
     "5_explanation/01_explanation_fewshot_train.py",
     "5_explanation/02_explanation_fewshot_dev.py",
-    # # 6. Cloze
-    # # "6_cloze.py/01_cloze_zero_dev.py",
-    # # "6_cloze.py/02_cloze_fewshot_train.py",
-    # # "6_cloze.py/03_cloze_fewshot_dev.py",
 ]
 
 # ------------------ Run Scripts ------------------

@@ -19,6 +19,10 @@ MODEL = start.MODEL
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 
+print(
+    f"Running CoT Fewshot Training for {CONCEPT} on {PLATFORM} with model {MODEL} and sample = {SAMPLE}."
+)
+
 COT_TASK_SUFFIX = (
     " First, explain your reasoning step by step. "
     "Then, state your final answer — either Yes or No — using the format: Final Answer: [Yes or No]"
