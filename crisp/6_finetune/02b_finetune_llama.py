@@ -10,6 +10,7 @@ from transformers import (
     TrainingArguments,
     Trainer,
     DataCollatorForLanguageModeling,
+    Callback,
 )
 from peft import get_peft_model, LoraConfig, TaskType
 from crisp.library import start
@@ -17,7 +18,7 @@ from crisp.library import start
 # ------------------ CONSTANTS ------------------
 CONCEPT = start.CONCEPT
 PLATFORM = "llama"
-MODEL = start.MODEL
+MODEL = "meta-llama/Meta-Llama-3-8B"
 SAMPLE = start.SAMPLE
 SEED = start.SEED
 LABEL = "top"  # change to "bottom" as needed
@@ -29,7 +30,9 @@ DATA_PATH = (
     start.DATA_DIR
     + f"finetune_llama/{PLATFORM}_{CONCEPT}_{TECHNIQUE}_finetune_train_{LABEL}.jsonl"
 )
-OUTPUT_DIR = start.RESULTS_DIR + f"llama3_{CONCEPT}_{TECHNIQUE}_{LABEL}_lora"
+OUTPUT_DIR = (
+    start.DATA_DIR + f"finetune_llama/{PLATFORM}_{CONCEPT}_{TECHNIQUE}_{LABEL}_lora"
+)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ------------------ LOAD MODEL AND TOKENIZER ------------------
@@ -76,11 +79,24 @@ tokenized_dataset = formatted_dataset.map(
     remove_columns=formatted_dataset.column_names,
 )
 
+
+# ------------------ PROGRESS CALLBACK ------------------
+class ProgressPrinter(Callback):
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs is not None:
+            current_step = state.global_step
+            total_steps = state.max_steps
+            percent = (current_step / total_steps) * 100 if total_steps else 0
+            print(
+                f"Step {current_step}/{total_steps} ({percent:.1f}%) — Loss: {logs.get('loss'):.4f}"
+            )
+
+
 # ------------------ TRAINING ARGS ------------------
 training_args = TrainingArguments(
     output_dir=OUTPUT_DIR,
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=8,
+    per_device_train_batch_size=8,
+    gradient_accumulation_steps=1,
     num_train_epochs=3,
     learning_rate=2e-4,
     fp16=True,
@@ -99,7 +115,13 @@ trainer = Trainer(
     train_dataset=tokenized_dataset,
     tokenizer=tokenizer,
     data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False),
+    callbacks=[ProgressPrinter()],
 )
 
 trainer.train()
+
+# ------------------ SAVE FINAL MODEL ------------------
+model.save_pretrained(OUTPUT_DIR)
+tokenizer.save_pretrained(OUTPUT_DIR)
+print(f"\n✅ Model saved to {OUTPUT_DIR}")
 # %%
