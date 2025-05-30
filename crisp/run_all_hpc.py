@@ -7,10 +7,6 @@ print(
     f"Running all scripts for {start.CONCEPT} on {start.PLATFORM} with {start.MODEL} and sample = {start.SAMPLE}."
 )
 
-# ------------------ Change to Project Directory ------------------
-
-# os.chdir("/scratch/kla21002/kla21002/crisp/")
-# print("Current working directory:", os.getcwd())
 
 # ------------------ Define Scripts ------------------
 script_paths = [
@@ -30,12 +26,12 @@ script_paths = [
     # "3_persona/02_persona_dev.py",
     # "3_persona/03_persona_fewshot_dev.py",
     # # 4. Chain of Thought - Zero
-    "4_cot/01_cot_zero_dev.py",
-    "4_cot/02_cot_fewshot_train.py",
-    "4_cot/03_cot_fewshot_dev.py",
+    "crisp/4_cot/01_cot_zero_dev.py",
+    "crisp/4_cot/02_cot_fewshot_train.py",
+    "crisp/4_cot/03_cot_fewshot_dev.py",
     # # 5. Explaination
-    "5_explanation/01_explanation_fewshot_train.py",
-    "5_explanation/02_explanation_fewshot_dev.py",
+    "crisp/5_explanation/01_explanation_fewshot_train.py",
+    "crisp/5_explanation/02_explanation_fewshot_dev.py",
 ]
 
 # ------------------ Run Scripts ------------------
