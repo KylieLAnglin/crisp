@@ -17,21 +17,21 @@ script_paths = [
     # "crisp/1_baseline_prompt/03_fewshot_train.py",
     # "crisp/1_baseline_prompt/04_fewshot_dev.py",
     # # # 2. Automatic Prompt Engineering
-    "crisp/2_APE/01_APE_train.py",
-    "crisp/2_APE/02_APE_dev.py",
-    "crisp/2_APE/03_APE_fewshot_train.py",
-    "crisp/2_APE/04_APE_fewshot_dev.py",
+    # "crisp/2_APE/01_APE_train.py",
+    # "crisp/2_APE/02_APE_dev.py",
+    # "crisp/2_APE/03_APE_fewshot_train.py",
+    # "crisp/2_APE/04_APE_fewshot_dev.py",
     # # 3. Persona
-    "crisp/3_persona/01_persona_train.py",
-    "crisp/3_persona/02_persona_dev.py",
-    "crisp/3_persona/03_persona_fewshot_dev.py",
+    # "crisp/3_persona/01_persona_train.py",
+    # "crisp/3_persona/02_persona_dev.py",
+    # "crisp/3_persona/03_persona_fewshot_dev.py",
     # # 4. Chain of Thought - Zero
-    "crisp/4_cot/01_cot_zero_dev.py",
-    # "crisp/4_cot/02_cot_fewshot_train.py",
-    # "crisp/4_cot/03_cot_fewshot_dev.py",
+    # "crisp/4_cot/01_cot_zero_dev.py",
+    "crisp/4_cot/02_cot_fewshot_train.py",
+    "crisp/4_cot/03_cot_fewshot_dev.py",
     # # 5. Explaination
-    # "crisp/5_explanation/01_explanation_fewshot_train.py",
-    # "crisp/5_explanation/02_explanation_fewshot_dev.py",
+    "crisp/5_explanation/01_explanation_fewshot_train.py",
+    "crisp/5_explanation/02_explanation_fewshot_dev.py",
 ]
 
 # ------------------ Run Scripts ------------------
