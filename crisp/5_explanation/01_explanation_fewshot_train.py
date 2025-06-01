@@ -44,6 +44,9 @@ EXPORT_RESULTS_PATH = (
     start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_explanation_few_results_train.xlsx"
 )
 
+print(
+    f"Running Explanation Fewshot Training for {CONCEPT} on {PLATFORM} with model {MODEL} and sample = {SAMPLE}."
+)
 # ------------------ LOAD TRAINING DATA ------------------
 df = pd.read_excel(DATA_PATH)
 df = df[(df.split_group == "train") & (df.text.notna()) & (df.human_code.notna())]
