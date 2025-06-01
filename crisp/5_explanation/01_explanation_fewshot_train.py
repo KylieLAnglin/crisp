@@ -47,6 +47,7 @@ EXPORT_RESULTS_PATH = (
 print(
     f"Running Explanation Fewshot Training for {CONCEPT} on {PLATFORM} with model {MODEL} and sample = {SAMPLE}."
 )
+
 # ------------------ LOAD TRAINING DATA ------------------
 df = pd.read_excel(DATA_PATH)
 df = df[(df.split_group == "train") & (df.text.notna()) & (df.human_code.notna())]
@@ -54,6 +55,15 @@ df = df[df.train_use == "eval"]
 if SAMPLE:
     df = df.sample(5, random_state=SEED)
 
+print("test classification")
+classify.evaluate_prompt(
+    prompt_text="Classify the following text. Text:",
+    prompt_id="test",
+    df=df.head(1),
+    platform="llama",
+    temperature=0.0001,
+)
+print("test classification done")
 # ------------------ IDENTIFY BEST PROMPT IDs ------------------
 baseline_df = pd.read_excel(IMPORT_RESULTS_PATH, sheet_name="results")
 top_prompt_id = int(
