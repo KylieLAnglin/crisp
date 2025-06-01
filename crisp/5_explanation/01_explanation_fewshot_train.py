@@ -57,10 +57,10 @@ if SAMPLE:
 
 print("test classification")
 classify.evaluate_prompt(
-    prompt_text="Classify the following text. Text:",
+    prompt_text="Classify the following text as positive or negative. Text:",
     prompt_id="test",
     df=df.head(1),
-    platform="llama",
+    platform=start.PLATFORM,
     temperature=0.0001,
 )
 print("test classification done")
