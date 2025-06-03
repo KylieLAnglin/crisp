@@ -7,13 +7,26 @@ from openpyxl import load_workbook
 
 ncb_df = pd.read_excel(start.DATA_DIR + "clean/ncb.xlsx")
 mm_df = pd.read_excel(start.DATA_DIR + "clean/mm.xlsx")
-ps_df = pd.read_excel(start.DATA_DIR + "clean/ps.xlsx")
+graitude_df = pd.read_excel(start.DATA_DIR + "clean/gratitude.xlsx")
 
+df = pd.concat([ncb_df, mm_df, graitude_df], ignore_index=True)
 
+len(graitude_df), len(ncb_df), len(mm_df)
+
+print(
+    f"Proportion with human code in gratitude: {len(graitude_df[graitude_df.human_code == 1]) / len(graitude_df):.2%}"
+)
+print(
+    f"Proportion with human code in ncb: {len(ncb_df[ncb_df.human_code == 1]) / len(ncb_df):.2%}"
+)
+print(
+    f"Proportion with human code in mm: {len(mm_df[mm_df.human_code == 1]) / len(mm_df):.2%}"
+)
+print(f"Total number of samples: {len(df)}")
 # %%
 # split_group and human_code
 sample_size_dict = {}
-for df, concept in zip([ps_df, ncb_df, mm_df], ["ps", "ncb", "mm"]):
+for df, concept in zip([graitude_df, ncb_df, mm_df], ["gratitude", "ncb", "mm"]):
     sample_size_dict[concept] = {}
     for split in ["train", "dev", "test"]:
         sample_size_dict[concept][split] = {}
