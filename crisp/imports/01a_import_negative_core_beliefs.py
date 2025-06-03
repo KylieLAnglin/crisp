@@ -98,39 +98,4 @@ df.study.value_counts()
 
 # %%
 df.to_excel(start.DATA_DIR + "temp/negative_core_beliefs.xlsx", index=False)
-# %%
-# ncb_participant_df = df[["participant_id"]].drop_duplicates()
-# ncb_participant_df = ncb_participant_df.sample(frac=1, random_state=42)
-# # 25% to traini, 50% to dev, 25% to test
-# ncb_participant_df["split"] = "dev"
-# ncb_participant_df.loc[
-#     ncb_participant_df.index[: int(len(ncb_participant_df) * 0.25)], "split"
-# ] = "train"
-# ncb_participant_df.loc[
-#     ncb_participant_df.index[int(len(ncb_participant_df) * 0.75) :], "split"
-# ] = "test"
 
-# df = df.merge(
-#     ncb_participant_df[["participant_id", "split"]],
-#     on="participant_id",
-#     how="left",
-# )
-
-# # print number of 0 and 1 in each split
-# for split in ["train", "dev", "test"]:
-#     print(f"{split}: {df[df.split == split].negative_belief_any.value_counts()}")
-
-# df = df[["participant_id", "study", "question", "split", "text", "negative_belief_any"]]
-# df.to_excel(
-#     start.DATA_DIR + "clean/negative_core_beliefs_original_gold.xlsx", index=False
-# )
-# df[df.split == "train"].to_excel(
-#     start.DATA_DIR + "clean/negative_core_beliefs_train_gold.xlsx", index=False
-# )
-
-# # prep for automatic engineering
-# train_df = df[df.split == "train"]
-# train_df = train_df.rename(columns={"negative_belief_any": "label"})
-# train_df.to_csv(
-#     start.DATA_DIR + "clean/negative_core_beliefs_train_gold.csv", index=False
-# )

@@ -5,11 +5,11 @@ from openpyxl import load_workbook, Workbook
 from crisp.library import start
 
 # ------------------ SETUP ------------------
-CONCEPT = start.CONCEPT
-PLATFORM = start.PLATFORM
+# CONCEPT = start.CONCEPT
+# PLATFORM = start.PLATFORM
 
-# CONCEPT = "gratitude"
-# PLATFORM = "openai"
+CONCEPT = "gratitude"
+PLATFORM = "openai"
 
 RESULTS_FILE = start.RESULTS_DIR + f"dev_table_{PLATFORM}_{CONCEPT}.xlsx"
 
@@ -45,14 +45,12 @@ else:
     wb = Workbook()
     ws = wb.active
     ws.title = "summary"
-    ws.cell(row=1, column=2, value="Top Baseline")
+    ws.cell(row=1, column=2, value="Bottom Baseline")
     ws.cell(row=2, column=2, value="Zero-Shot")
     ws.cell(row=2, column=3, value="Few-Shot")
-    ws.cell(row=2, column=4, value="Fine-Tune")
-    ws.cell(row=1, column=5, value="Bottom Baseline")
-    ws.cell(row=2, column=5, value="Zero-Shot")
-    ws.cell(row=2, column=6, value="Few-Shot")
-    ws.cell(row=2, column=7, value="Fine-Tune")
+    ws.cell(row=1, column=4, value="Top Baseline")
+    ws.cell(row=2, column=4, value="Zero-Shot")
+    ws.cell(row=2, column=5, value="Few-Shot")
 
     row = 3
     for technique in TECHNIQUES:
@@ -92,12 +90,18 @@ for category in ["top", "bottom"]:
 # ------------------ WRITE ONLY TOP ZERO-SHOT ------------------
 start_row = 3
 column_maps = {
-    "top": {"Zero-Shot": 2, "Few-Shot": 3, "Fine-Tune": 4},
-    "bottom": {"Zero-Shot": 5, "Few-Shot": 6, "Fine-Tune": 7},
+    "top": {
+        "Zero-Shot": 4,
+        "Few-Shot": 5,
+    },
+    "bottom": {
+        "Zero-Shot": 2,
+        "Few-Shot": 3,
+    },
 }
 
 for strategy in ["Zero-Shot", "Few-Shot"]:
-    for category in ["top", "bottom"]:
+    for category in ["bottom", "top"]:
         col = column_maps[category][strategy]
         row = start_row
         for technique in TECHNIQUES:
