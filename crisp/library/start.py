@@ -4,7 +4,7 @@
 # CONCEPT = "mm", "ncb", "goodreads"
 # SAMPLE = True, False
 USER = "Kylie"
-PLATFORM = "llama3.3"
+PLATFORM = "openai"
 CONCEPT = "mm"
 SAMPLE = False
 
