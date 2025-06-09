@@ -8,6 +8,11 @@ CONCEPTS = ["gratitude", "ncb", "mm"]
 PLATFORMS = ["openai", "llama3.3"]
 CATEGORIES = ["top", "bottom"]
 
+CONCEPT_LABELS = {
+    "gratitude": "Gratitude",
+    "ncb": "Negative Core Beliefs",
+    "mm": "Meaning Making",
+}
 # Grayscale line styles by concept
 LINESTYLES = {
     "gratitude": "solid",
@@ -50,7 +55,7 @@ for i, category in enumerate(["bottom", "top"]):  # bottom on top
     df_cat = df_full[df_full["category"] == category]
 
     for (platform, concept), group in df_cat.groupby(["platform", "concept"]):
-        label = f"{concept.capitalize()} ({platform})"
+        label = f"{CONCEPT_LABELS[concept]} ({platform})"
         linestyle = LINESTYLES[concept]
         color = COLORS[platform]
 
@@ -77,7 +82,7 @@ for i, category in enumerate(["bottom", "top"]):  # bottom on top
         )
 
     ax.set_title(f"{category.capitalize()} Prompts", fontsize=13)
-    ax.set_ylabel("Max F1 Score", fontsize=11)
+    ax.set_ylabel("F1 Score", fontsize=11)
     ax.set_ylim(0.3, 1.0)
     ax.grid(True, linestyle="--", alpha=0.6)
     if i == 1:
@@ -85,7 +90,7 @@ for i, category in enumerate(["bottom", "top"]):  # bottom on top
 
 # ------------------ STYLING ------------------
 axes[0].legend(title="Construct / Platform", fontsize=9, loc="lower right")
-fig.suptitle("Max F1 per Generation by Prompt Type", fontsize=15)
+# fig.suptitle("Max F1 per Generation by Prompt Type", fontsize=15)
 plt.xticks(sorted(df_full["generation"].unique()))
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.rcParams["font.family"] = "times new roman"
