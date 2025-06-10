@@ -21,7 +21,7 @@ print(f"Running {CONCEPT} on {PLATFORM} with {MODEL} in train set")
 NUM_VARIANTS = 5
 NUM_GENERATIONS = 5
 
-META_INSTRUCTIONS1 = "Generate a variation of the following instruction while keeping the output format. You can add important information or remove unnecessary information. Instruction:\n"
+META_INSTRUCTIONS1 = "Generate a variation of the following prompt while keeping the output format. You can add important information or remove unnecessary information. Instruction:\n"
 META_INSTRUCTIONS2 = "\nOutput only the new instruction."
 
 DATA_PATH = start.DATA_DIR + f"clean/{CONCEPT}.xlsx"
