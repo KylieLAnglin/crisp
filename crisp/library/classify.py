@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from openpyxl import Workbook, load_workbook
+    from openpyxl import Workbook, load_workbook
 
 from crisp.library import start, secrets, metric_standard_errors
 
@@ -198,13 +199,7 @@ def export_results_to_excel(
     n_bootstraps=1000,
     random_state=12,
 ):
-    """
-    Export classification results (with or without standard errors) to an Excel sheet.
 
-    Parameters:
-    - group_col: string or list of column names to group results by.
-    """
-    from openpyxl import Workbook, load_workbook
 
     # Ensure output file exists
     if not os.path.exists(output_path):
@@ -229,7 +224,6 @@ def export_results_to_excel(
     for col_num, header in enumerate(headers, 1):
         ws.cell(row=1, column=col_num, value=header)
 
-    # Group by specified columns
     grouped = df.dropna(subset=[y_true_col, y_pred_col]).groupby(group_col)
 
     row = 2
@@ -280,44 +274,6 @@ def evaluate_fewshot_prompt_combinations(
     label_format_fn=None,
     verbose=True,
 ):
-    """
-    Evaluate few-shot samples across multiple prompt categories.
-
-    Parameters
-    ----------
-    samples : list of dict
-        Each dict should have keys:
-            - "sample_id": unique identifier
-            - "num_examples": number of examples
-            - "examples": list of dicts with "text" and "label"
-
-    df_eval : pd.DataFrame
-        DataFrame of evaluation texts and ground-truth labels.
-
-    prompt_dict : dict
-        Mapping from category name to base prompt text (e.g., {"top": ..., "bottom": ...}).
-
-    platform : str
-        Platform used for inference (e.g., "gpt-4").
-
-    temperature : float, default=0.0001
-        Model temperature setting.
-
-    prefix : str, default="fewshot"
-        String used in naming prompt_id (e.g., "top_fewshot_12_n5").
-
-    label_format_fn : function or None
-        Optional function to convert binary label to string (e.g., 1 → "Yes", 0 → "No").
-        If None, defaults to "Yes"/"No".
-
-    verbose : bool, default=True
-        Whether to display a progress bar.
-
-    Returns
-    -------
-    response_rows : list of dict
-        Results from classification, with metadata columns: category, num_examples, prompt_id.
-    """
 
     if label_format_fn is None:
         label_format_fn = lambda label: "Yes" if label == 1 else "No"
