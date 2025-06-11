@@ -61,7 +61,7 @@ for row in tqdm(
 # ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(RESPONSE_PATH, index=False)
-
+long_df = pd.read_excel(RESPONSE_PATH)
 # ------------------ EXPORT RESULTS ------------------
 classify.export_results_to_excel(
     df=long_df,

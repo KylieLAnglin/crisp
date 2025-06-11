@@ -75,7 +75,6 @@ bottom_row = baseline_df.loc[baseline_df["F1"].idxmin()]
 top_prompt_id = int(top_row["prompt_id"].split("_")[2])
 bottom_prompt_id = int(bottom_row["prompt_id"].split("_")[2])
 
-# Load clean top/bottom prompt text from baseline zero-shot file
 prompt_df = pd.read_excel(IMPORT_BASELINE_PROMPTS, sheet_name="results")
 top_prompt = (
     prompt_df.loc[prompt_df["F1"].idxmax(), "prompt"].replace("Text:", "").strip()
@@ -104,9 +103,9 @@ pd.DataFrame(top_examples).to_excel(TEMP_TOP_PATH, index=False)
 pd.DataFrame(bottom_examples).to_excel(TEMP_BOTTOM_PATH, index=False)
 
 ####
-# Break here.
+# Break here. Need to manually add explanation/reasoning.
 ####
-
+print(f"Stop. Add reasoning.")
 # ------------------ LOAD COT-LABELED EXAMPLES ------------------
 top_examples_cot_df = pd.read_excel(EXCEL_TOP_COT_PATH)
 bottom_examples_cot_df = pd.read_excel(EXCEL_BOTTOM_COT_PATH)
@@ -215,6 +214,7 @@ all_rows = top_response_rows + bottom_response_rows
 long_df = pd.DataFrame(all_rows)
 
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
+long_df = pd.read_excel(EXPORT_RESPONSE_PATH)
 
 classify.export_results_to_excel(
     df=long_df,

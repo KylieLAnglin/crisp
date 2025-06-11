@@ -49,8 +49,6 @@ bottom_prompt = baseline_df.loc[baseline_df["F1"].idxmin(), "prompt"]
 # ------------------ LOAD TRAINING FEWSHOT RESULTS ------------------
 
 prompt_df = pd.read_excel(BASELINE_RESULTS_PATH, sheet_name="results")
-# only keep rows with highest F1 score for category = top and
-# highest F1 score for category = bottom
 
 prompt_df = prompt_df[
     prompt_df.groupby("category")["F1"].transform(max) == prompt_df["F1"]
@@ -76,6 +74,7 @@ for row in tqdm(
 # ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(RESPONSE_PATH, index=False)
+long_df = pd.read_excel(RESPONSE_PATH)
 
 # ------------------ EXPORT METRICS ------------------
 classify.export_results_to_excel(

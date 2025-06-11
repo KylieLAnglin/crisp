@@ -1,4 +1,3 @@
-# 3_persona/01_persona_train.py
 # %%
 import os
 import pandas as pd
@@ -29,7 +28,6 @@ EXPORT_RESULTS_PATH = (
     start.MAIN_DIR + f"results/{PLATFORM}_{CONCEPT}_persona_zero_results_train.xlsx"
 )
 
-# ------------------ CONSTANTS ------------------
 
 # ------------------ LOAD DATA ------------------
 df = pd.read_excel(DATA_PATH)
@@ -89,6 +87,7 @@ for row in tqdm(combo_df.itertuples(), total=len(combo_df), desc="Evaluating Pro
 # ------------------ SAVE RESPONSES ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
+long_df = pd.read_excel(EXPORT_RESPONSE_PATH)
 
 # ------------------ EXPORT METRICS ------------------
 classify.export_results_to_excel(

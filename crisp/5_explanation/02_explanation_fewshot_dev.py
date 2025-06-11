@@ -43,7 +43,6 @@ if SAMPLE:
 # ------------------ LOAD BEST PROMPTS FROM TRAIN ------------------
 train_df = pd.read_excel(TRAIN_RESULTS_PATH, sheet_name="results")
 
-# Keep top-performing prompt for each category (top, bottom)
 best_prompts = (
     train_df.sort_values(["category", "F1"], ascending=[True, False])
     .groupby("category", as_index=False)
@@ -77,6 +76,7 @@ for row in tqdm(
 # ------------------ EXPORT ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(DEV_RESPONSE_PATH, index=False)
+long_df = pd.read_excel(DEV_RESPONSE_PATH)
 
 classify.export_results_to_excel(
     df=long_df,

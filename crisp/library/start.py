@@ -5,7 +5,7 @@
 # SAMPLE = True, False
 USER = "Kylie"
 PLATFORM = "openai"
-CONCEPT = "mm"
+CONCEPT = "gratitude"
 SAMPLE = False
 
 
