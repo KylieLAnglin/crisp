@@ -8,8 +8,8 @@ from crisp.library import start
 # CONCEPT = start.CONCEPT
 # PLATFORM = start.PLATFORM
 
-CONCEPT = "mm"
-PLATFORM = "llama3.3"
+CONCEPT = "ncb"
+PLATFORM = "openai"
 
 RESULTS_FILE = start.RESULTS_DIR + f"dev_table_{PLATFORM}_{CONCEPT}.xlsx"
 

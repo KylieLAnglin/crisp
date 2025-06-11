@@ -250,6 +250,14 @@ def export_results_to_excel(
     n_bootstraps=1000,
     random_state=12,
 ):
+    # group_col="prompt_id"
+    # prompt_col="prompt"
+    # y_true_col="human_code"
+    # y_pred_col="classification"
+    # sheet_name="results"
+    # include_se=True
+    # n_bootstraps=1000
+    # random_state=12
 
     if not os.path.exists(output_path):
         wb = Workbook()
@@ -286,6 +294,10 @@ def export_results_to_excel(
         prec = precision_score(y_true, y_pred)
         rec = recall_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred)
+
+        print(
+            f"Group: {group_vals}, Accuracy: {acc:.3f}, Precision: {prec:.3f}, Recall: {rec:.3f}, F1: {f1:.3f}"
+        )
 
         result_row = list(group_vals) if isinstance(group_vals, tuple) else [group_vals]
         result_row += [acc, prec, rec, f1]
@@ -325,7 +337,10 @@ def export_results_to_excel(
                 random_state=random_state,
             )
             result_row += [acc_se, prec_se, rec_se, f1_se]
-
+            print(
+                f"Group: {group_vals}, Accuracy SE: {acc_se:.3f}, Precision SE: {prec_se:.3f}, "
+                f"Recall SE: {rec_se:.3f}, F1 SE: {f1_se:.3f}"
+            )
         result_row.append(prompt_text)
 
         for col, val in enumerate(result_row, 1):

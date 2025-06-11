@@ -81,6 +81,7 @@ response_rows = classify.evaluate_fewshot_prompt_combinations(
 # ------------------ EXPORT RESPONSES AND METRICS ------------------
 long_df = pd.DataFrame(response_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
+long_df = pd.read_excel(EXPORT_RESPONSE_PATH)
 
 classify.export_results_to_excel(
     df=long_df,

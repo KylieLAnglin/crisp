@@ -196,6 +196,7 @@ for row in bottom_response_rows:
 all_rows = top_response_rows + bottom_response_rows
 long_df = pd.DataFrame(all_rows)
 long_df.to_excel(EXPORT_RESPONSE_PATH, index=False)
+long_df = pd.read_excel(EXPORT_RESPONSE_PATH)
 
 classify.export_results_to_excel(
     df=long_df,
