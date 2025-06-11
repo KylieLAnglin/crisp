@@ -9,8 +9,6 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from openpyxl import Workbook, load_workbook
-from openpyxl import Workbook, load_workbook
-from openpyxl import Workbook, load_workbook
 
 from crisp.library import start, secrets, metric_standard_errors
 
@@ -81,42 +79,6 @@ def create_binary_classification_from_response(response):
     return np.nan
 
 
-# ------------------ PROMPT VARIATION ------------------
-def generate_prompt_variants(
-    model_provider, base_prompt, metaprompt1, metaprompt2, num_variants
-):
-    """
-    Use meta-instructions to generate prompt variants using a model provider.
-    """
-    variants = []
-    for _ in range(num_variants):
-        meta_instructions = metaprompt1 + base_prompt + metaprompt2
-
-        if model_provider == "openai":
-            response = client.chat.completions.create(
-                model=start.MODEL,
-                messages=[{"role": "system", "content": meta_instructions}],
-                temperature=1,
-            )
-            new_prompt = response.choices[0].message.content.strip()
-
-        elif model_provider.startswith("llama"):
-            llm = OllamaLLM(
-                model=start.MODEL,
-                base_url="http://localhost:11434",
-                temperature=1,
-                seed=start.SEED,
-            )
-            new_prompt = llm.invoke(meta_instructions)
-
-        else:
-            raise ValueError(f"Unsupported model provider: {model_provider}")
-
-        variants.append(new_prompt)
-
-    return variants
-
-
 # ------------------ PROMPT EVALUATION ------------------
 def evaluate_prompt(
     prompt_text, prompt_id, df, platform, temperature=0.0001, parser_fn=None
@@ -169,6 +131,145 @@ def evaluate_prompt(
     return rows
 
 
+# ------------------ METRIC UTILITIES ------------------
+def print_and_save_metrics(human_codes, classifications):
+    """
+    Print and return accuracy, precision, recall, F1.
+    """
+    accuracy = accuracy_score(human_codes, classifications)
+    precision = precision_score(human_codes, classifications)
+    recall = recall_score(human_codes, classifications)
+    f1 = f1_score(human_codes, classifications)
+
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"F1: {f1}")
+
+    return accuracy, precision, recall, f1
+
+
+# ------------------ PROMPT VARIATION ------------------
+def generate_prompt_variants(
+    model_provider, base_prompt, metaprompt1, metaprompt2, num_variants
+):
+    """
+    Use meta-instructions to generate prompt variants using a model provider.
+    """
+    variants = []
+    for _ in range(num_variants):
+        meta_instructions = metaprompt1 + base_prompt + metaprompt2
+
+        if model_provider == "openai":
+            response = client.chat.completions.create(
+                model=start.MODEL,
+                messages=[{"role": "system", "content": meta_instructions}],
+                temperature=1,
+            )
+            new_prompt = response.choices[0].message.content.strip()
+
+        elif model_provider.startswith("llama"):
+            llm = OllamaLLM(
+                model=start.MODEL,
+                base_url="http://localhost:11434",
+                temperature=1,
+                seed=start.SEED,
+            )
+            new_prompt = llm.invoke(meta_instructions)
+
+        else:
+            raise ValueError(f"Unsupported model provider: {model_provider}")
+
+        variants.append(new_prompt)
+
+    return variants
+
+
+# ------------------ EXCEL EXPORT ------------------
+def export_results_to_excel(
+    df,
+    output_path,
+    group_col="prompt_id",
+    prompt_col="prompt",
+    y_true_col="human_code",
+    y_pred_col="classification",
+    sheet_name="results",
+    include_se=True,
+    n_bootstraps=1000,
+    random_state=12,
+):
+    """
+    Export classification results (with or without standard errors) to an Excel sheet.
+
+    Parameters:
+    - group_col: string or list of column names to group results by.
+    """
+    from openpyxl import Workbook, load_workbook
+
+    # Ensure output file exists
+    if not os.path.exists(output_path):
+        wb = Workbook()
+        wb.save(output_path)
+
+    wb = load_workbook(output_path)
+    if sheet_name in wb.sheetnames:
+        del wb[sheet_name]
+    ws = wb.create_sheet(sheet_name)
+
+    # Ensure group_col is a list
+    if isinstance(group_col, str):
+        group_col = [group_col]
+
+    # Set up header
+    headers = group_col + ["Accuracy", "Precision", "Recall", "F1"]
+    if include_se:
+        headers += ["Accuracy SE", "Precision SE", "Recall SE", "F1 SE"]
+    headers.append(prompt_col)
+
+    for col_num, header in enumerate(headers, 1):
+        ws.cell(row=1, column=col_num, value=header)
+
+    # Group by specified columns
+    grouped = df.dropna(subset=[y_true_col, y_pred_col]).groupby(group_col)
+
+    row = 2
+    for group_vals, group_df in grouped:
+        y_true = group_df[y_true_col]
+        y_pred = group_df[y_pred_col]
+        prompt_text = group_df[prompt_col].iloc[0]
+
+        acc, prec, rec, f1 = print_and_save_metrics(y_true, y_pred)
+        result_row = list(group_vals) if isinstance(group_vals, tuple) else [group_vals]
+        result_row += [acc, prec, rec, f1]
+
+        if include_se:
+            _, acc_se = metric_standard_errors.bootstrap_accuracy(
+                y_true, y_pred, n_bootstraps, random_state
+            )
+            _, prec_se = metric_standard_errors.bootstrap_precision(
+                y_true, y_pred, n_bootstraps, random_state
+            )
+            _, rec_se = metric_standard_errors.bootstrap_recall(
+                y_true, y_pred, n_bootstraps, random_state
+            )
+            _, f1_se = metric_standard_errors.bootstrap_f1(
+                y_true, y_pred, n_bootstraps, random_state
+            )
+            result_row += [acc_se, prec_se, rec_se, f1_se]
+
+        result_row.append(prompt_text)
+
+        for col, val in enumerate(result_row, 1):
+            ws.cell(
+                row=row,
+                column=col,
+                value=round(val, 3) if isinstance(val, float) else val,
+            )
+        row += 1
+
+    wb.save(output_path)
+
+
 def evaluate_fewshot_prompt_combinations(
     samples,
     df_eval,
@@ -179,6 +280,44 @@ def evaluate_fewshot_prompt_combinations(
     label_format_fn=None,
     verbose=True,
 ):
+    """
+    Evaluate few-shot samples across multiple prompt categories.
+
+    Parameters
+    ----------
+    samples : list of dict
+        Each dict should have keys:
+            - "sample_id": unique identifier
+            - "num_examples": number of examples
+            - "examples": list of dicts with "text" and "label"
+
+    df_eval : pd.DataFrame
+        DataFrame of evaluation texts and ground-truth labels.
+
+    prompt_dict : dict
+        Mapping from category name to base prompt text (e.g., {"top": ..., "bottom": ...}).
+
+    platform : str
+        Platform used for inference (e.g., "gpt-4").
+
+    temperature : float, default=0.0001
+        Model temperature setting.
+
+    prefix : str, default="fewshot"
+        String used in naming prompt_id (e.g., "top_fewshot_12_n5").
+
+    label_format_fn : function or None
+        Optional function to convert binary label to string (e.g., 1 → "Yes", 0 → "No").
+        If None, defaults to "Yes"/"No".
+
+    verbose : bool, default=True
+        Whether to display a progress bar.
+
+    Returns
+    -------
+    response_rows : list of dict
+        Results from classification, with metadata columns: category, num_examples, prompt_id.
+    """
 
     if label_format_fn is None:
         label_format_fn = lambda label: "Yes" if label == 1 else "No"
@@ -217,138 +356,3 @@ def evaluate_fewshot_prompt_combinations(
             response_rows.extend(eval_rows)
 
     return response_rows
-
-
-# ------------------ Performance ------------------
-def print_and_save_metrics(human_codes, classifications):
-    """
-    Print and return accuracy, precision, recall, F1.
-    """
-    accuracy = accuracy_score(human_codes, classifications)
-    precision = precision_score(human_codes, classifications)
-    recall = recall_score(human_codes, classifications)
-    f1 = f1_score(human_codes, classifications)
-
-    print(f"Accuracy: {accuracy}")
-    print(f"Precision: {precision}")
-    print(f"Recall: {recall}")
-    print(f"F1: {f1}")
-
-    return accuracy, precision, recall, f1
-
-
-# ------------------ EXCEL EXPORT ------------------
-def export_results_to_excel(
-    df,
-    output_path,
-    group_col="prompt_id",
-    prompt_col="prompt",
-    y_true_col="human_code",
-    y_pred_col="classification",
-    sheet_name="results",
-    include_se=True,
-    n_bootstraps=1000,
-    random_state=12,
-):
-    # group_col="prompt_id"
-    # prompt_col="prompt"
-    # y_true_col="human_code"
-    # y_pred_col="classification"
-    # sheet_name="results"
-    # include_se=True
-    # n_bootstraps=1000
-    # random_state=12
-
-    if not os.path.exists(output_path):
-        wb = Workbook()
-        wb.save(output_path)
-
-    wb = load_workbook(output_path)
-    if sheet_name in wb.sheetnames:
-        del wb[sheet_name]
-    ws = wb.create_sheet(sheet_name)
-
-    if isinstance(group_col, str):
-        group_col = [group_col]
-
-    # Set up header
-    headers = group_col + ["Accuracy", "Precision", "Recall", "F1"]
-    if include_se:
-        headers += ["Accuracy SE", "Precision SE", "Recall SE", "F1 SE"]
-    headers.append(prompt_col)
-
-    for col_num, header in enumerate(headers, 1):
-        ws.cell(row=1, column=col_num, value=header)
-
-    # Group by specified columns
-    grouped = df.dropna(subset=[y_true_col, y_pred_col]).groupby(group_col)
-
-    row = 2
-    for group_vals, group_df in grouped:
-        y_true = group_df[y_true_col]
-        y_pred = group_df[y_pred_col]
-        prompt_text = group_df[prompt_col].iloc[0]
-
-        # Compute base metrics
-        acc = accuracy_score(y_true, y_pred)
-        prec = precision_score(y_true, y_pred)
-        rec = recall_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred)
-
-        print(
-            f"Group: {group_vals}, Accuracy: {acc:.3f}, Precision: {prec:.3f}, Recall: {rec:.3f}, F1: {f1:.3f}"
-        )
-
-        result_row = list(group_vals) if isinstance(group_vals, tuple) else [group_vals]
-        result_row += [acc, prec, rec, f1]
-
-        # Compute SEs using participant-level bootstrap
-        if include_se:
-            _, acc_se, _ = metric_standard_errors.bootstrap_accuracy(
-                group_df,
-                id_col="participant_id",
-                y_true_col=y_true_col,
-                y_pred_col=y_pred_col,
-                n_bootstraps=n_bootstraps,
-                random_state=random_state,
-            )
-            _, prec_se, _ = metric_standard_errors.bootstrap_precision(
-                group_df,
-                id_col="participant_id",
-                y_true_col=y_true_col,
-                y_pred_col=y_pred_col,
-                n_bootstraps=n_bootstraps,
-                random_state=random_state,
-            )
-            _, rec_se, _ = metric_standard_errors.bootstrap_recall(
-                group_df,
-                id_col="participant_id",
-                y_true_col=y_true_col,
-                y_pred_col=y_pred_col,
-                n_bootstraps=n_bootstraps,
-                random_state=random_state,
-            )
-            _, f1_se, _ = metric_standard_errors.bootstrap_f1(
-                group_df,
-                id_col="participant_id",
-                y_true_col=y_true_col,
-                y_pred_col=y_pred_col,
-                n_bootstraps=n_bootstraps,
-                random_state=random_state,
-            )
-            result_row += [acc_se, prec_se, rec_se, f1_se]
-            print(
-                f"Group: {group_vals}, Accuracy SE: {acc_se:.3f}, Precision SE: {prec_se:.3f}, "
-                f"Recall SE: {rec_se:.3f}, F1 SE: {f1_se:.3f}"
-            )
-        result_row.append(prompt_text)
-
-        for col, val in enumerate(result_row, 1):
-            ws.cell(
-                row=row,
-                column=col,
-                value=round(val, 3) if isinstance(val, float) else val,
-            )
-        row += 1
-
-    wb.save(output_path)
