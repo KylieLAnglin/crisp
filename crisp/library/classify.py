@@ -11,7 +11,12 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from openpyxl import Workbook, load_workbook
 from openpyxl import Workbook, load_workbook 
 
-from crisp.library import start, secrets, metric_standard_errors
+from crisp.library import start, metric_standard_errors 
+
+from crisp.library.start import PLATFORM
+if PLATFORM == "openai":
+    from crisp.library import secrets  # Ensure secrets are imported for OpenAI API key 
+
 
 # ------------------ CLIENT SETUP ------------------
 if "llama" in start.PLATFORM:
